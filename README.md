@@ -7,7 +7,7 @@ Monitoring scripts for glideinWMS pools in CMS.
 
 Include files are:
 
-   * condor_functions.sh:        General queries for schedd's and the collector.
+   * condor_functions.sh:        General queries for schedds and the collector.
    * dashboard_functions.sh:     Queries the Dashboard for site usage and the SSB for site downtimes.
    * sitedb_functions.sh         Queries the CMS site database for CPU pledges.
 
