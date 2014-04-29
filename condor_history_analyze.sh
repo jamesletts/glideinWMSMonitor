@@ -14,6 +14,8 @@ NOW=`ls -l --time-style=+%s $FILE | awk '{print $6}'`
 
 echo
 echo "SCHEDDS CONSIDERED IN THE HISTORY:"
+/bin/date -u
+/bin/date
 echo
 echo "   Jobs Schedd"
 cat $FILE | grep -o GlobalJobId=.* | awk -F\= '{print $2}' | awk -F\# '{print $1}' | sort | uniq -c 
