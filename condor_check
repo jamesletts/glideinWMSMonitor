@@ -1,15 +1,15 @@
 #!/bin/bash
+
+if [ -z $glideinWMSMonitor_RELEASE_DIR ] ; then
+  echo "ERROR: source code missing."
+  exit 1
+else
+  source $glideinWMSMonitor_RELEASE_DIR/bashrc
+fi
+
 POOLNAME=$1
 SHORT=$2
 if [ "X"$SHORT == "X" ] ; then SHORT="long" ; fi
-
-source /etc/profile.d/condor.sh
-
-source /home/letts/scripts/sitedb_functions.sh
-source /home/letts/scripts/condor_functions.sh
-source /home/letts/scripts/dashboard_functions.sh
-
-export X509_USER_PROXY=/tmp/x509up_u500
 
 # Header
 echo Summary Table for glidinWMS pool $POOLNAME at `/bin/date -u`
@@ -20,21 +20,23 @@ echo
 negotime=`condor_status -pool $POOLNAME -nego -l | grep LastNegotiationCycleDuration0 | awk '{print $3}'` || exit 3
 echo "Negotiation time = ${negotime}s"
 echo
+
 # dont print the long table if asked
 if [ $SHORT == "short" ] ; then 
   exit 0 
 fi
-
 
 # get information from sitedb about pledges and se names by CMSSite name
 PLEDGES=`get_pledges_from_sitedb`
 SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
 # get information from dashboard about avg and max usage by CMSSite name
-USAGE=`dashboard_usage_by_site analysis`
-USAGEUW=`dashboard_usage_at_wisconsin analysis`
-MAXUSAGE=`dashboard_usage_by_site all`
-MAXUSAGEUW=`dashboard_usage_at_wisconsin all`
+USAGE=`dashboard_usage_by_site analysis "3 months ago"`
+MAXUSAGE=`dashboard_usage_by_site all "3 months ago"`
+
+# Information from T2_US_Wisconsin before April 3, 2014 is inflated.
+USAGEUW=`dashboard_usage_at_site analysis "3 weeks ago"`
+MAXUSAGEUW=`dashboard_usage_at_site all "3 weeks ago"`
 
 # get information from SSB about site downtimes
 DOWNTIMES=`site_downtimes_from_ssb`
@@ -50,7 +52,6 @@ printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Ple
 printf "%30s%10s%10s%10s%40s%10s\n" "Updated" "Analysis" "Usage" "Usage" "Pressure" "Prod"
 echo
 
-
 # Sum up some interesting quantities:
 totalpledge=0
 totalclaimed=0
@@ -60,17 +61,14 @@ totalpledge=0
 totalavgusage=0
 totalmaxusage=0
 
-
 # Loop over sites for the table:
 sites=`cat $SEDFILE | awk -F\/ '{print $3}' | sort | uniq`
 for site in $sites ; do
-
 
   # Claimed pilots at site
   claimed=`grep \{$site\} $CLAIMED | awk '{print $1}'`
   if [ "X"$claimed == "X" ] ; then claimed=0 ; fi
   totalclaimed=$[$totalclaimed+$claimed]
-
 
   # Idle pilots at site = running - claimed:
   unclaimed=`grep \{$site\} $RUNNING | awk -v x=$claimed '{print $1-x}'`
@@ -85,11 +83,9 @@ for site in $sites ; do
   # Get queeud jobs for site (not exclusively):
   pressure=`grep $site $DESIRED | wc -l`
 
-
   # Get jobs queued only for this site:
   exclusivepressure=`grep $site $DESIRED | awk -v site=$site '$1==site{print $0}' | wc -l`
   totalexclusivepressure=$[$totalexclusivepressure+$exclusivepressure]
-
 
   # Extract pledge for this site (total for all activities):
   # Federation pledges may have duplicated entries (one SiteDB, one REBUS), so take the last one.
