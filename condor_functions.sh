@@ -1,13 +1,24 @@
 #!/bin/sh
 
-source /etc/profile.d/condor.sh
-
 getClassAds() {
+  # Function to dump a set of ClassAds for queued, running and jobs 
+  # from the past 24h of condor history. If the command fails remotely,
+  # then one can try to gsissh to the node to execute the query.
+  #
+  # Usage:
+  #    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history -const '(CurrentTime-EnteredCurrentStatus<86400)'"
+  #    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_q"
+  # Output:
+  #    Space separated list of job ClassAds, one row per job.
+  #
+  # Called from condor_history_dump
+
   POOLNAME=$1 ; shift
   SCHEDDNAME=$1 ; shift
   MACHINENAME=$1 ; shift
-  # function to dump a particular set of ClassAds from command such as
-  # condor_history or condor_q
+
+  # It is convenient to have JobStatus first to distinguish
+  # it from LastJobStatus.
   command="$@ \
       -format 'JobStatus=%i\ '              JobStatus \
       -format 'LastJobStatus=%i\ '          LastJobStatus \
@@ -32,9 +43,15 @@ getClassAds() {
   return $rc
 }
 
-
 get_pilots_by_site() {
-  # Get pilots for each site. Args are poolname and any addition arguments for condor_status like -claimed
+  # Function to list the number of pilots running per site.
+  #
+  # Usage:
+  #    get_pilots_by_site POOLNAME [optional args for condor_status]
+  # Output:
+  #    File name of temporary file containing the numbers of pilots
+  #    running at CMSSites, one line per site.
+
   PILOTS=`mktemp -t PILOTS.txt.XXXXXXX` || return 1
   condor_status -pool $@ -format '{%s}\n' GLIDEIN_CMSSite | sort | uniq -c > $PILOTS || return 2
   echo $PILOTS
@@ -42,9 +59,18 @@ get_pilots_by_site() {
 }
 
 get_DESIRED_Sites() {
-  # Get all queued jobs DESIRED_Sites, translating from SE if needed.
-  # If DESIRED_Sites exists, take that. Otherwise take DESIRED_SEs and translate using SEDFILE from SiteDB.
-  # Note that DAG jobs do not have DESIRED_Sites defined and are not counted here.
+  # Get all queued jobs' DESIRED_Sites, translating from DESIRED_SEs
+  # if needed (i.e. for CRAB2). If DESIRED_Sites exists, take that. 
+  # Otherwise take DESIRED_SEs and translate using SEDFILE from SiteDB.
+  # Note that DAG jobs do not have DESIRED_Sites defined since they
+  # run on a schedd and are not counted here.
+  #
+  # Usage:
+  #    get_DESIRED_Sites $POOLNAME
+  # Output:
+  #    File name of temporary file containing the list of DESIRES_Sites,
+  #    one line per job.
+
   POOLNAME=$1
 
   source /home/letts/scripts/sitedb_functions.sh
@@ -66,6 +92,15 @@ get_DESIRED_Sites() {
 }
 
 condor_history_dump() {
+  # Function to dump all ClassAds defined in getClassAds
+  # for all queued, running and jobs that completed in the
+  # past day in a glideinWMS pool.
+  #
+  # Usage:
+  #    condor_history_dump $POOLNAME
+  # Output:
+  #    ClassAd values, one line per job.
+  #
   POOLNAME=$1
   SCHEDDS=`condor_status -pool $POOLNAME -schedd -format '%s\,' Name -format '%s\n' Machine`
   for SCHEDD in $SCHEDDS ; do
