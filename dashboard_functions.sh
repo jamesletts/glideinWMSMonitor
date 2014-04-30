@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 site_downtimes_from_ssb() {
   # get the downtimes from SSB, remove any quotes so the output

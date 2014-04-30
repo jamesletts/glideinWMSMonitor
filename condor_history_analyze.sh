@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # discover the exit code explantions?
 # DAG jobs not included in held table.
 # report CRAB3 vs CRAB2 jobs

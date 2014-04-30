@@ -13,6 +13,7 @@ export  glideinWMSMonitor_OUTPUT_DIR="/crabprod/CSstoragePath/Monitor"
 
 # Discover the directory where the software sits:
 export  glideinWMSMonitor_RELEASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo $glideinWMSMonitor_RELEASE_DIR
 
 # source the functions to discover SiteDB, HTCondor and CMS Dashboard information
 source $glideinWMSMonitor_RELEASE_DIR/sitedb_functions.sh

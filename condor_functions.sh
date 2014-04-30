@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 getClassAds() {
   # Function to dump a set of ClassAds for queued, running and jobs 

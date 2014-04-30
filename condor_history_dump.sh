@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+
 POOLNAME="glidein-collector-2.t2.ucsd.edu"
 
 OUTFILE=$glideinWMSMonitor_OUTPUT_DIR/monitor-anaops-history-`/bin/date +%F-Z%R -u`.txt

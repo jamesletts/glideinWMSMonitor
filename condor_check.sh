@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # put a time limit on a command
 alarm() { perl -e 'alarm shift; exec @ARGV' "$@"; }
