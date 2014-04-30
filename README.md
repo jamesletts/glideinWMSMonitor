@@ -5,6 +5,10 @@ JAMES LETTS, April 27, 2014.
 
 Monitoring scripts for glideinWMS pools in CMS.
 
+Setup file:
+
+   * bashrc                      Customise the location of the condor source file and grid proxy.
+
 Include files are:
 
    * condor_functions.sh:        General queries for schedds and the collector.

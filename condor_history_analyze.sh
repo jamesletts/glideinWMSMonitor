@@ -3,24 +3,34 @@
 # DAG jobs not included in held table.
 # report CRAB3 vs CRAB2 jobs
 
-source /home/letts/scripts/condor_functions.sh
 POOLNAME=$1
 
+if [ -z $glideinWMSMonitor_RELEASE_DIR ] ; then
+  echo "ERROR: glideinWMSMonitor source code missing."
+  exit 1
+fi
+
 # get the latest dumped history file from the web server:
-FILE=/crabprod/CSstoragePath/Monitor/`ls -1rt /crabprod/CSstoragePath/Monitor \
+FILE=$glideinWMSMonitor_OUTPUT_DIR/`ls -1rt /crabprod/CSstoragePath/Monitor \
   | grep ^monitor-anaops-history | grep \.txt$ | tail -1`
-echo HISTORY FILE: $FILE
 NOW=`ls -l --time-style=+%s $FILE | awk '{print $6}'`
 
+cat <<EOF
+HISTORY FILE: $FILE
+
+SCHEDDS CONSIDERED IN THE HISTORY:
+
+ Queued
+   Jobs Schedd Name
+EOF
+grep '^JobStatus=[125]' $FILE | grep -o GlobalJobId=.* | awk -F\= '{print $2}' | awk -F\# '{print $1}' | sort | uniq -c 
+cat <<EOF
+
+   Done
+   Jobs Schedd Name
+EOF
+grep '^JobStatus=[34]' $FILE | grep -o GlobalJobId=.* | awk -F\= '{print $2}' | awk -F\# '{print $1}' | sort | uniq -c 
 echo
-echo "SCHEDDS CONSIDERED IN THE HISTORY:"
-/bin/date -u
-/bin/date
-echo
-echo "   Jobs Schedd"
-cat $FILE | grep -o GlobalJobId=.* | awk -F\= '{print $2}' | awk -F\# '{print $1}' | sort | uniq -c 
-echo
-echo "N.B. Job counts include both finished, queued and running jobs."
 echo
 
 nabort=`grep "^JobStatus=3" $FILE                           | wc -l`
@@ -34,11 +44,6 @@ goodWC=` grep "^JobStatus=4" $FILE  | grep    'ExitCode=0\ '  | grep -o  RemoteW
 badWC=`  grep "^JobStatus=4" $FILE  | grep -v 'ExitCode=0\ '  | grep -o  RemoteWallClockTime=[0-9]* \
   | awk -F\= 'BEGIN{x=0}{x+=$2}END{print int(x/86400.)}'`
 
-totalWC=$[$abortWC+$goodWC+$badWC]
-abortpct=`echo $abortWC $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
-goodpct=` echo $goodWC  $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
-badpct=`  echo $badWC   $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
-
 abortCPU=`grep "^JobStatus=3" $FILE                           | grep -o  RemoteUserCpu=[0-9]* \
   | awk -F\= 'BEGIN{x=0}{x+=$2}END{print int(x/86400.)}'`
 goodCPU=` grep "^JobStatus=4" $FILE  | grep    'ExitCode=0\ ' | grep -o  RemoteUserCpu=[0-9]* \
@@ -46,21 +51,71 @@ goodCPU=` grep "^JobStatus=4" $FILE  | grep    'ExitCode=0\ ' | grep -o  RemoteU
 badCPU=`  grep "^JobStatus=4" $FILE  | grep -v 'ExitCode=0\ ' | grep -o  RemoteUserCpu=[0-9]* \
   | awk -F\= 'BEGIN{x=0}{x+=$2}END{print int(x/86400.)}'`
 
+# need to REMOVE DAG JOBS FROM HERE!!
+read nheld heldWC heldCPU <<< $(grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
+BEGIN {
+  yesterday=now-86400
+  SumRemoteWallClockTime=0
+  SumRemoteUserCpu=0
+  SumHeld=0
+}
+{
+  skip=1
+  for (i=1; i<=NF; i++) {
+    split($i,subfields,"=")
+    if (subfields[1]=="EnteredCurrentStatus") {
+      EnteredCurrentStatus=subfields[2] 
+      if (EnteredCurrentStatus>yesterday) { skip=0 }
+    }
+    if (skip==0 && subfields[1]=="RemoteWallClockTime")   { SumRemoteWallClockTime+=subfields[2] }
+    if (skip==0 && subfields[1]=="RemoteUserCpu")         { SumRemoteUserCpu+=subfields[2] }
+  }
+  if ( skip==0 ) { SumHeld+=1 }
+}
+END{
+  SumRemoteWallClockTime/=86400.
+  SumRemoteUserCpu/=86400.
+  HeldPerJob=SumRemoteWallClockTime/SumHeld*24.
+  HeldEff=SumRemoteUserCpu/SumRemoteWallClockTime*100.
+  #printf "Held        %10i %10.1f %10.1f %10.1f\n",SumHeld,SumRemoteWallClockTime,HeldPerJob,HeldEff
+  print SumHeld
+  print SumRemoteWallClockTime
+  print SumRemoteUserCpu
+}
+')
+
+ntotal=`  echo $nabort  $ngood  $nbad  $nheld  | awk '{print $1+$2+$3+$5}'`
+totalWC=` echo $abortWC $goodWC $badWC $heldWC | awk '{print $1+$2+$3+$5}'`
+totalCPU=`echo $abortCPU $goodCPU $badCPU $heldCPU | awk '{print $1+$2+$3+$5}'`
+
+abortpct=`echo $abortWC $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
+goodpct=` echo $goodWC  $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
+badpct=`  echo $badWC   $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
+heldpct=` echo $heldWC  $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
+
 aborteff=` echo $abortCPU $abortWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
 goodeff=`  echo $goodCPU  $goodWC  | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
 badeff=`   echo $badCPU   $badWC   | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
+heldeff=`  echo $heldCPU  $heldWC  | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
+totaleff=` echo $totalCPU $totalWC | awk '{if($2>0){print $1/$2*100.0}else{print 0}}'`
 
 abortperjob=`echo $abortWC $nabort | awk '{if($2>0){print $1/$2*24.}else{print 0}}'`
 goodperjob=` echo $goodWC  $ngood  | awk '{if($2>0){print $1/$2*24.}else{print 0}}'`
 badperjob=`  echo $badWC   $nbad   | awk '{if($2>0){print $1/$2*24.}else{print 0}}'`
+heldperjob=` echo $heldWC  $nheld  | awk '{if($2>0){print $1/$2*24.}else{print 0}}'`
+totalperjob=`echo $totalWC $ntotal | awk '{if($2>0){print $1/$2*24.}else{print 0}}'`
 
 echo
-echo "SUMMARY TABLE OF JOBS WHICH COMPLETED IN THE PAST 24 HOURS (not including Held jobs):"
+echo "SUMMARY TABLE OF JOBS WHICH COMPLETED IN THE PAST 24 HOURS:"
 echo
-printf "Job Result  %10s %10s %10s %10s %10s\n"      "Number"  "WC(d)"    "WC(%)"     "WC/job(h)"    "CPU/WC(%)"
-printf "ExitCode=0  %10s %10s %10.1f %10.1f %10.1f\n" $ngood    $goodWC    $goodpct    $goodperjob    $goodeff
-printf "ExitCode!=0 %10s %10s %10.1f %10.1f %10.1f\n" $nbad     $badWC     $badpct     $badperjob     $badeff
-printf "Aborted     %10s %10s %10.1f %10.1f %10.1f\n" $nabort   $abortWC   $abortpct   $abortperjob   $aborteff
+printf "Job Result  %10s %10s %10s %10s %10s\n"          "Number"  "WC(d)"    "WC(%)"     "WC/job(h)"   "CPU/WC(%)"
+printf "ExitCode=0  %10.0f %10.0f %10.1f %10.1f %10.1f\n" $ngood    $goodWC    $goodpct    $goodperjob   $goodeff
+printf "ExitCode!=0 %10.0f %10.0f %10.1f %10.1f %10.1f\n" $nbad     $badWC     $badpct     $badperjob    $badeff
+printf "Removed     %10.0f %10.0f %10.1f %10.1f %10.1f\n" $nabort   $abortWC   $abortpct   $abortperjob  $aborteff
+printf "Held        %10.0f %10.0f %10.1f %10.1f %10.1f\n" $nheld    $heldWC    $heldpct    $heldperjob   $heldeff
+echo
+printf "Sum         %10.0f %10.0f %10.1f %10.1f %10.1f\n" $ntotal   $totalWC   "100"       $totalperjob  $totaleff
+
 
 echo
 echo EXIT CODE BREAKDOWN OF COMPLETED JOBS:
@@ -100,6 +155,8 @@ echo
 echo HELD JOBS IN THE PAST 24 HOURS:
 echo
 printf "%-20s %8s %8s %8s %10s\n" "Site" "Held Jobs" "Users" "Pilots" "WC(d)"
+
+
 
 grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
 {
@@ -168,10 +225,13 @@ END {
 }
 ' | grep ^T | sort
 
+exit
+
 echo
 echo
 echo USER PRIORITIES:
 echo
-condor_userprio -allusers -all -pool $POOLNAME
+#condor_userprio -allusers -all -pool $POOLNAME
+condor_userprio -all -pool $POOLNAME
 
 exit
