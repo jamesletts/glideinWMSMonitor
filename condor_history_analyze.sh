@@ -8,12 +8,13 @@ POOLNAME=$1
 if [ -z $glideinWMSMonitor_RELEASE_DIR ] ; then
   echo "ERROR: glideinWMSMonitor source code missing."
   exit 1
+else
+  source $glideinWMSMonitor_RELEASE_DIR/bashrc
 fi
 
 # get the latest dumped history file from the web server:
 FILE=$glideinWMSMonitor_OUTPUT_DIR/`ls -1rt /crabprod/CSstoragePath/Monitor \
   | grep ^monitor-anaops-history | grep \.txt$ | tail -1`
-FILE=$glideinWMSMonitor_OUTPUT_DIR/monitor-anaops-history-2014-04-29-Z18:59.txt
 NOW=`ls -l --time-style=+%s $FILE | awk '{print $6}'`
 
 cat <<EOF
