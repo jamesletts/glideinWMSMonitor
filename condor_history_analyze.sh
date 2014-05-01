@@ -213,7 +213,7 @@ END {
 ' | grep ^T | sort
 
 
-$glideinWMSMonitor_RELEASE_DIR/debug.sh
+#doesnt work $glideinWMSMonitor_RELEASE_DIR/debug.sh
 
 #echo
 #echo

@@ -15,13 +15,14 @@ getClassAds() {
   #
   # Called from condor_history_dump
 
-  POOLNAME=$1 ; shift
-  SCHEDDNAME=$1 ; shift
+  POOLNAME=$1    ; shift
+  SCHEDDNAME=$1  ; shift
   MACHINENAME=$1 ; shift
 
   # It is convenient to have JobStatus first to distinguish
   # it from LastJobStatus.
   command="$@ \
+      -const '(CurrentTime-EnteredCurrentStatus<86400)' \
       -format 'JobStatus=%i\ '              JobStatus \
       -format 'LastJobStatus=%i\ '          LastJobStatus \
       -format 'ExitCode=%i\ '               ExitCode \
@@ -108,7 +109,8 @@ condor_history_dump() {
   for SCHEDD in $SCHEDDS ; do
     SCHEDDNAME=` echo $SCHEDD | awk -F\, '{print $1}'`
     MACHINENAME=`echo $SCHEDD | awk -F\, '{print $2}'`
-    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history -const '(CurrentTime-EnteredCurrentStatus<86400)'"
+    #getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history -const '(CurrentTime-EnteredCurrentStatus<86400)'"
+    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history"
     getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_q"
   done
   return 0
