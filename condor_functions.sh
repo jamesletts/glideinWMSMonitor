@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# BUG: -const '(CurrentTime-EnteredCurrentStatus<86400)' is being ignored!
+
 getClassAds() {
   # Function to dump a set of ClassAds for queued, running and jobs 
   # from the past 24h of condor history. If the command fails remotely,

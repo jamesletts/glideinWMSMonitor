@@ -17,22 +17,7 @@ FILE=$glideinWMSMonitor_OUTPUT_DIR/`ls -1rt /crabprod/CSstoragePath/Monitor \
   | grep ^monitor-anaops-history | grep \.txt$ | tail -1`
 NOW=`ls -l --time-style=+%s $FILE | awk '{print $6}'`
 
-cat <<EOF
-HISTORY FILE: $FILE
-
-SCHEDDS CONSIDERED IN THE HISTORY:
-
- Queued
-   Jobs Schedd Name
-EOF
-grep '^JobStatus=[125]' $FILE | grep -o GlobalJobId=.* | awk -F\= '{print $2}' | awk -F\# '{print $1}' | sort | uniq -c 
-cat <<EOF
-
-   Done
-   Jobs Schedd Name
-EOF
-grep '^JobStatus=[34]' $FILE | grep -o GlobalJobId=.* | awk -F\= '{print $2}' | awk -F\# '{print $1}' | sort | uniq -c 
-echo
+echo HISTORY FILE: $FILE
 echo
 
 nabort=`grep "^JobStatus=3" $FILE                           | wc -l`
@@ -227,13 +212,14 @@ END {
 }
 ' | grep ^T | sort
 
-exit
 
-echo
-echo
-echo USER PRIORITIES:
-echo
+$glideinWMSMonitor_RELEASE_DIR/debug.sh
+
+#echo
+#echo
+#echo USER PRIORITIES:
+#echo
+#condor_userprio -all -pool $POOLNAME
 #condor_userprio -allusers -all -pool $POOLNAME
-condor_userprio -all -pool $POOLNAME
 
 exit

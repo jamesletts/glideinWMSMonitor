@@ -13,9 +13,12 @@ if [ "X"$SHORT == "X" ] ; then SHORT="long" ; fi
 
 # Header
 echo Summary Table for glidinWMS pool $POOLNAME at `/bin/date -u`
+echo
+
 # Summary Table from the Collector
 condor_status -pool $POOLNAME -schedd || exit 2
 echo
+
 # Last Negotiation Cycle time
 negotime=`condor_status -pool $POOLNAME -nego -l | grep LastNegotiationCycleDuration0 | awk '{print $3}'` || exit 3
 echo "Negotiation time = ${negotime}s"
