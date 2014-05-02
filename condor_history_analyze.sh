@@ -212,14 +212,14 @@ END {
 }
 ' | grep ^T | sort
 
-
-#doesnt work $glideinWMSMonitor_RELEASE_DIR/debug.sh
-
-#echo
-#echo
-#echo USER PRIORITIES:
-#echo
-#condor_userprio -all -pool $POOLNAME
+echo
+echo
+echo USER PRIORITIES:
+echo
+condor_userprio -all -pool $POOLNAME
 #condor_userprio -allusers -all -pool $POOLNAME
+
+
+$glideinWMSMonitor_RELEASE_DIR/debug.sh $FILE
 
 exit

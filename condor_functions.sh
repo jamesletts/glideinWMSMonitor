@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # BUG: -const '(CurrentTime-EnteredCurrentStatus<86400)' is being ignored!
+# Worse, its being taken as the opposite ... ????
 
 getClassAds() {
   # Function to dump a set of ClassAds for queued, running and jobs 
@@ -8,7 +9,7 @@ getClassAds() {
   # then one can try to gsissh to the node to execute the query.
   #
   # Usage:
-  #    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history -const '(CurrentTime-EnteredCurrentStatus<86400)'"
+  #    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history"
   #    getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_q"
   # Output:
   #    Space separated list of job ClassAds, one row per job.
@@ -19,10 +20,10 @@ getClassAds() {
   SCHEDDNAME=$1  ; shift
   MACHINENAME=$1 ; shift
 
-  # It is convenient to have JobStatus first to distinguish
-  # it from LastJobStatus.
+  NOW=`/bin/date +%s`
+  YESTERDAY=$[$NOW-86400]
   command="$@ \
-      -const '(CurrentTime-EnteredCurrentStatus<86400)' \
+      -const  '(EnteredCurrentStatus>$YESTERDAY)' \
       -format 'JobStatus=%i\ '              JobStatus \
       -format 'LastJobStatus=%i\ '          LastJobStatus \
       -format 'ExitCode=%i\ '               ExitCode \
@@ -109,7 +110,6 @@ condor_history_dump() {
   for SCHEDD in $SCHEDDS ; do
     SCHEDDNAME=` echo $SCHEDD | awk -F\, '{print $1}'`
     MACHINENAME=`echo $SCHEDD | awk -F\, '{print $2}'`
-    #getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history -const '(CurrentTime-EnteredCurrentStatus<86400)'"
     getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_history"
     getClassAds $POOLNAME $SCHEDDNAME $MACHINENAME "condor_q"
   done
