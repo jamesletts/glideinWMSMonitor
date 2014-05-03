@@ -5,6 +5,11 @@
 
 POOLNAME=$1
 
+if [ -z $POOLNAME ] ; then
+  echo "ERROR: Please specify a pool name."
+  exit 1
+fi
+
 if [ -z $glideinWMSMonitor_RELEASE_DIR ] ; then
   echo "ERROR: glideinWMSMonitor source code missing."
   exit 1
@@ -109,41 +114,37 @@ echo EXIT CODE BREAKDOWN OF COMPLETED JOBS:
 echo
 printf "%8s %9s %9s  %-11s\n" "Jobs" "Condor"   "CMSSW"    "Explanation"
 printf "%18s %9s\n"                "ExitCode" "ExitCode" 
-cat $FILE | grep "^JobStatus=4" | grep -o ExitCode=[0-9]* | sort | uniq -c \
-  | awk '($1>100){print $0}' | tr \= \  | sort -n -r -k 1 \
-  | awk '
-{
-  id=0
-  explanation="not listed yet"
-  if ($3==0)   {id=0;     explanation="Success"}
-  if ($3==59)  {id=10043; explanation="Unable to bootstrap WMCore libraries (most likely site python is broken)"}
-  if ($3==65)  {id=8001;  explanation="Other CMS Exception, or 65: End of job from user application (CMSSW)"}
-  if ($3==83)  {id=8019;  explanation="FileInPathError"}
-  if ($3==84)  {id=8020;  explanation="FileOpenError (Likely a site error), or 84: Some required file not found"}
-  if ($3==85)  {id=8021;  explanation="FileReadError (May be a site error)"}
-  if ($3==92)  {id=8028;  explanation="FileOpenError with fallback"}
-  if ($3==112) {id=70000; explanation="Output_sandbox too big for WMS, or 50800: Application segfaulted"}
-  if ($3==127) {id=127;   explanation="Error while loading shared library"}
-  if ($3==142) {id=60302; explanation="Output file(s) not found"}
-  if ($3==147) {id=60307; explanation="Failed to copy an output file to the SE"}
-  if ($3==148) {id=60308; explanation="An output file was saved to fall back local SE after failing to copy"}
-  if ($3==157) {id=60317; explanation="Forced timeout for stuck stage out"}
-  if ($3==158) {id=60318; explanation="Internal error in Crab cmscp.py stageout script"}
-  if ($3==195) {id=50115; explanation="cmsRun did not produce a valid job report at runtime (often means cmsRun segfaulted)"}
-  if ($3==228) {id=50660; explanation="Application terminated by wrapper because using too much RAM (RSS)"}
-  if ($3==232) {id=50664; explanation="Application terminated by wrapper because using too much Wall Clock time"}
-  if ($3==237) {id=50669; explanation="Application terminated by wrapper for not defined reason"}
-  printf("%8i %9i %9i  %-24s\n",$1,$3,id,explanation)
-}'
+COUNT_EXIT_CODES=`cat $FILE | grep "^JobStatus=4" | grep -o ExitCode=[0-9]* | sort | uniq -c \
+  | awk '($1>100){print $0}' | sed 's/ExitCode=//'  | sort -n -r -k 1 | awk '{printf("%8i:%-8i",$1,$2)}'`
+for x in $COUNT_EXIT_CODES ; do
+  n=`               echo $x | awk -F\: '{print $1}'` 
+  condor_exit_code=`echo $x | awk -F\: '{print $2}'` 
+  cmssw_exit_code=`       condor_exit_codes $condor_exit_code | awk -F\- '{print $1}' | tail -1`
+  explanation=`           condor_exit_codes $condor_exit_code | awk -F\- '{print $2}' | tail -1`
+  second_cmssw_exit_code=`condor_exit_codes $condor_exit_code | awk -F\- '{print $1}' | head -1`
+  if [ $condor_exit_code -eq 0 ] ; then 
+    cmssw_exit_code=0
+    second_cmssw_exit_code=0
+    explanation="Success" 
+  fi
+  printf "%8i  %8i  %8i  " $n $condor_exit_code $cmssw_exit_code
+  echo $explanation
+
+  if [ $cmssw_exit_code -ne $second_cmssw_exit_code ] ; then
+    second_explanation=`    condor_exit_codes $condor_exit_code | awk -F\- '{print $2}' | head -1`
+    printf "%28i  " $second_cmssw_exit_code
+    echo $second_explanation
+  fi
+done
+
 echo
-echo "N.B. Exit Code explanations copied from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes"
+echo "N.B. Exit Code explanations taken from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes."
+echo "     Only categories with more than 100 jobs are shown."
 
 echo
 echo HELD JOBS IN THE PAST 24 HOURS:
 echo
 printf "%-20s %8s %8s %8s %10s\n" "Site" "Held Jobs" "Users" "Pilots" "WC(d)"
-
-
 
 grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
 {
@@ -218,7 +219,6 @@ echo USER PRIORITIES:
 echo
 condor_userprio -all -pool $POOLNAME
 #condor_userprio -allusers -all -pool $POOLNAME
-
 
 $glideinWMSMonitor_RELEASE_DIR/debug.sh $FILE
 
