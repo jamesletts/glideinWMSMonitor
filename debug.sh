@@ -6,9 +6,9 @@ export TZ=UTC0
 echo
 echo "====================================== BEGIN DEBUG ======================================="
 echo
-echo $FILE
+echo HISTORY FILE: $FILE
 echo
-printf "%-35s %8s %-35s\n" "schedd Name" "Jobs" "Earliest Entry Time"
+printf "%-35s %8s %-35s\n" "schedd Name" "#Jobs" "Earliest Entry Time"
 SCHEDDS=`condor_status -schedd -format '%s\n' Name`
 for SCHEDD in $SCHEDDS ; do
   n=`       cat $FILE | grep $SCHEDD\# | wc -l`

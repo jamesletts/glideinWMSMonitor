@@ -119,7 +119,8 @@ condor_history_dump() {
 condor_exit_codes() {
   # Function to extract the possible matching CMSSW error codes given the %256 
   # ExitCode from HTCondor. The CMSSW exit codes can be found in the $URL but
-  # it is not publically visible yet.
+  # it is not publically visible yet. Later you can download periodically to 
+  # the release directory.
   #
   # Usage:
   #   condor_error_codes $CONDOR_EXIT_CODE
@@ -127,8 +128,21 @@ condor_exit_codes() {
   #   CMSSW exit code matches and text explanations.
   #
   CONDOR_EXIT_CODE=$1
-  URL=https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes
+  #
+  # Exit code explanation file, check its age and download a new one if too old:
+  #
   FILE=$glideinWMSMonitor_RELEASE_DIR/JobExitCodes.html
+  NOW=`/bin/date +%s`
+  FILE_created=`date -r $FILE +%s`
+  age_of_FILE=`echo $NOW $FILE_created | awk '{print int(($1-$2)/86400.)}'`
+  if [ $age_of_FILE -gt 30 ] ; then
+    URL=https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes
+    echo "Please update $FILE from $URL !"
+    # wget -o $FILE $URL
+  fi
+  #
+  # grep the explanation of a particular code(s).
+  #
   grep \- $FILE  | grep -o [0-9]*\ \-\ .*  | sed 's/<.*>//g' \
     | awk -F\- -v code=$CONDOR_EXIT_CODE '(code==$1%256){print $0}' 
   return 0
