@@ -140,6 +140,9 @@ done
 echo
 echo "N.B. Exit Code explanations taken from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes."
 echo "     Only categories with more than 100 jobs are shown."
+echo "     Some ambiguity exists in the error codes from HTCondor. Additional possibilities for exit"
+echo "        code mappings are listed on the following line in those cases, e.g. HTCondor exit code"
+echo "        84 can map to 84 or 8020, since 8020%256=84."
 
 echo
 echo HELD JOBS IN THE PAST 24 HOURS:

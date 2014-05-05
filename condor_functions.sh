@@ -132,18 +132,49 @@ condor_exit_codes() {
   # Exit code explanation file, check its age and download a new one if too old:
   #
   FILE=$glideinWMSMonitor_RELEASE_DIR/JobExitCodes.html
-  NOW=`/bin/date +%s`
-  FILE_created=`date -r $FILE +%s`
-  age_of_FILE=`echo $NOW $FILE_created | awk '{print int(($1-$2)/86400.)}'`
-  if [ $age_of_FILE -gt 30 ] ; then
-    URL=https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes
-    echo "Please update $FILE from $URL !"
-    # wget -o $FILE $URL
-  fi
+  #NOW=`/bin/date +%s`
+  #FILE_created=`date -r $FILE +%s`
+  #age_of_FILE=`echo $NOW $FILE_created | awk '{print int(($1-$2)/86400.)}'`
+  #if [ $age_of_FILE -gt 30 ] ; then
+  #  URL=https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes
+  #  echo "Please update $FILE from $URL !"
+  #  wget -o $FILE $URL
+  #fi
   #
   # grep the explanation of a particular code(s).
   #
   grep \- $FILE  | grep -o [0-9]*\ \-\ .*  | sed 's/<.*>//g' \
     | awk -F\- -v code=$CONDOR_EXIT_CODE '(code==$1%256){print $0}' 
+  return 0
+}
+
+condor_hold_codes() {
+  # Ref: http://research.cs.wisc.edu/htcondor/manual/v7.6/10_Appendix_A.html
+  if   [ $1 -eq  1 ] ; then echo "The user put the job on hold with condor_hold." ;
+  elif [ $1 -eq  2 ] ; then echo "Globus middleware reported an error." ;
+  elif [ $1 -eq  3 ] ; then echo "The PERIODIC_HOLD expression evaluated to True." ;
+  elif [ $1 -eq  4 ] ; then echo "The credentials for the job are invalid." ;
+  elif [ $1 -eq  5 ] ; then echo "A job policy expression evaluated to Undefined." ;
+  elif [ $1 -eq  6 ] ; then echo "The condor_starter failed to start the executable." ;
+  elif [ $1 -eq  7 ] ; then echo "The standard output file for the job could not be opened." ;
+  elif [ $1 -eq  8 ] ; then echo "The standard input file for the job could not be opened." ;
+  elif [ $1 -eq  9 ] ; then echo "The standard output stream for the job could not be opened." ;
+  elif [ $1 -eq 10 ] ; then echo "The standard input stream for the job could not be opened." ;
+  elif [ $1 -eq 11 ] ; then echo "An internal Condor protocol error was encountered when transferring files." ;
+  elif [ $1 -eq 12 ] ; then echo "The condor_starter failed to download input files." ;
+  elif [ $1 -eq 13 ] ; then echo "The condor_starter failed to upload output files." ;
+  elif [ $1 -eq 14 ] ; then echo "The initial working directory of the job cannot be accessed." ;
+  elif [ $1 -eq 15 ] ; then echo "The user requested the job be submitted on hold." ;
+  elif [ $1 -eq 16 ] ; then echo "Input files are being spooled." ;
+  elif [ $1 -eq 17 ] ; then echo "A standard universe job is not compatible with the condor_shadow version available on the submitting machine." ;
+  elif [ $1 -eq 18 ] ; then echo "An internal Condor protocol error was encountered when transferring files." ;
+  elif [ $1 -eq 19 ] ; then echo "<Keyword>_HOOK_PREPARE_JOB was defined but could not be executed or returned failure." ;
+  elif [ $1 -eq 20 ] ; then echo "The job missed its deferred execution time and therefore failed to run." ;
+  elif [ $1 -eq 21 ] ; then echo "The job was put on hold because WANT_HOLD in the machine policy was true." ;
+  elif [ $1 -eq 22 ] ; then echo "Unable to initialize user log." ;
+  # CMS-specific reasons? glexec
+  elif [ $1 -eq 28 ] ; then echo "error changing sandbox ownership to the user. (glexec)" ;
+  elif [ $1 -eq 30 ] ; then echo "error changing sandbox ownership to condor. (glexec)";
+  else echo "UNKNOWN HoldReasonCode $1" ; fi
   return 0
 }

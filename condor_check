@@ -38,8 +38,8 @@ USAGE=`dashboard_usage_by_site analysis "3 months ago"`
 MAXUSAGE=`dashboard_usage_by_site all "3 months ago"`
 
 # Information from T2_US_Wisconsin before April 3, 2014 is inflated.
-USAGEUW=`dashboard_usage_at_site analysis "3 weeks ago"`
-MAXUSAGEUW=`dashboard_usage_at_site all "3 weeks ago"`
+USAGEUW=`dashboard_usage_by_site analysis "3 weeks ago"`
+MAXUSAGEUW=`dashboard_usage_by_site all "3 weeks ago"`
 
 # get information from SSB about site downtimes
 DOWNTIMES=`site_downtimes_from_ssb`
