@@ -1,5 +1,4 @@
 #!/bin/bash
-# discover the exit code explantions?
 # DAG jobs not included in held table.
 # report CRAB3 vs CRAB2 jobs
 
@@ -147,7 +146,7 @@ echo "        84 can map to 84 or 8020, since 8020%256=84."
 echo
 echo HELD JOBS IN THE PAST 24 HOURS:
 echo
-printf "%-20s %8s %8s %8s %10s\n" "Site" "Held Jobs" "Users" "Pilots" "WC(d)"
+printf "%-20s %8s %8s %8s %10s %8s\n" "Site" "Held Jobs" "Users" "Pilots" "WC(d)" "Code"
 
 grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
 {
@@ -162,6 +161,8 @@ grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
 
   yesterday=now-86400
   skip=1
+
+  # In each line of the history file, pull out some Held jobs information only:
 
   for (i=1; i<=NF; i++) {
     split($i,subfields,"=")
@@ -180,12 +181,15 @@ grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
     if (subfields[1]=="RemoteUserCpu")         { RemoteUserCpu=subfields[2] }
   }
 
+  # Fill some arrays with information about held jobs. Key is the site name:
+
   if ( skip==0 && MATCH_GLIDEIN_CMSSite~/^T/ ) {
     HeldJobs[MATCH_GLIDEIN_CMSSite]+=1
     HeldOwners[MATCH_GLIDEIN_CMSSite,Owner]+=1
     HeldPilots[MATCH_GLIDEIN_CMSSite,LastRemoteHost]+=1
     HeldWCtime[MATCH_GLIDEIN_CMSSite]+=RemoteWallClockTime
     HeldUserCpu[MATCH_GLIDEIN_CMSSite]+=RemoteUserCpu
+    HoldReasons[MATCH_GLIDEIN_CMSSite,HoldReasonCode]+=1
   }
 }
 END {
@@ -210,7 +214,26 @@ END {
     SumHeldJobs+=HeldJobs[site]
     SumWallClockTime+=WCtime
 
-    printf "%-20s  %8i %8i %8i %10.1f\n",site,HeldJobs[site],nOwners,nPilots,WCtime
+    #printf "%-20s  %8i %8i %8i %10.1f\n",site,HeldJobs[site],nOwners,nPilots,WCtime
+    printf "%-20s  %8i %8i %8i %10.1f ",site,HeldJobs[site],nOwners,nPilots,WCtime
+
+    maxcode=0
+    maxcodecount=0
+    for (i=1;i<40;i++) {
+      if ( HoldReasons[site,i] > maxcodecount ) {
+        maxcode=i
+        maxcodecount=HoldReasons[site,i]
+      }
+    }
+    explanation="?"
+    if (maxcode==4 ) { explanation="The credentials for the job are invalid" }
+    if (maxcode==6 ) { explanation="The condor_starter failed to start the executable" }
+    if (maxcode==12) { explanation="The condor_starter failed to download input files" }
+    if (maxcode==13) { explanation="The condor_starter failed to upload output files" }
+    if (maxcode==22) { explanation="Unable to initialize user log" }
+    if (maxcode==28) { explanation="error changing sandbox ownership to the user" }
+    if (maxcode==30) { explanation="error changing sandbox ownership to condor" }
+    printf "%8i (%5i jobs) %30s\n",maxcode,HoldReasons[site,maxcode],explanation 
   }
   printf "TOTAL %24i %28.1f\n", SumHeldJobs, SumWallClockTime
 }

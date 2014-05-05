@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# BUG: -const '(CurrentTime-EnteredCurrentStatus<86400)' is being ignored!
-# Worse, its being taken as the opposite ... ????
-
 getClassAds() {
   # Function to dump a set of ClassAds for queued, running and jobs 
   # from the past 24h of condor history. If the command fails remotely,
@@ -77,7 +74,7 @@ get_DESIRED_Sites() {
 
   POOLNAME=$1
 
-  source /home/letts/scripts/sitedb_functions.sh
+  source $glideinWMSMonitor_RELEASE_DIR/sitedb_functions.sh
   SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
   SCHEDDS=`condor_status -pool $POOLNAME  -const '(TotalIdleJobs>0)' -schedd -format ' -name %s' Name ` || return 1
@@ -87,7 +84,7 @@ get_DESIRED_Sites() {
   if [ `echo $SCHEDDS | wc -w` -ne 0 ] ; then 
     condor_q $SCHEDDS -pool $POOLNAME -const '(JobStatus=?=1)' \
       -format '%s' DESIRED_Sites -format ' %s' DESIRED_SEs -format ' %s\n' Owner \
-      | awk '{print $1}' | sed -f $SEDFILE >> $DESIRED || exit 8
+      | sed 's/undefined//g' | awk '{print $1}' | sed -f $SEDFILE >> $DESIRED
   fi
 
   echo $DESIRED
@@ -129,17 +126,13 @@ condor_exit_codes() {
   #
   CONDOR_EXIT_CODE=$1
   #
-  # Exit code explanation file, check its age and download a new one if too old:
+  # Exit code explanation file
   #
-  FILE=$glideinWMSMonitor_RELEASE_DIR/JobExitCodes.html
-  #NOW=`/bin/date +%s`
-  #FILE_created=`date -r $FILE +%s`
-  #age_of_FILE=`echo $NOW $FILE_created | awk '{print int(($1-$2)/86400.)}'`
-  #if [ $age_of_FILE -gt 30 ] ; then
-  #  URL=https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes
-  #  echo "Please update $FILE from $URL !"
-  #  wget -o $FILE $URL
-  #fi
+  FILE=$glideinWMSMonitor_RELEASE_DIR/JobExitCodes
+  if [ ! -f $FILE ] ; then
+    URL="https://twiki.cern.ch/twiki/bin/view/CMSPublic/JobExitCodes"
+    curl -ks -o $FILE $URL
+  fi
   #
   # grep the explanation of a particular code(s).
   #
@@ -148,33 +141,4 @@ condor_exit_codes() {
   return 0
 }
 
-condor_hold_codes() {
-  # Ref: http://research.cs.wisc.edu/htcondor/manual/v7.6/10_Appendix_A.html
-  if   [ $1 -eq  1 ] ; then echo "The user put the job on hold with condor_hold." ;
-  elif [ $1 -eq  2 ] ; then echo "Globus middleware reported an error." ;
-  elif [ $1 -eq  3 ] ; then echo "The PERIODIC_HOLD expression evaluated to True." ;
-  elif [ $1 -eq  4 ] ; then echo "The credentials for the job are invalid." ;
-  elif [ $1 -eq  5 ] ; then echo "A job policy expression evaluated to Undefined." ;
-  elif [ $1 -eq  6 ] ; then echo "The condor_starter failed to start the executable." ;
-  elif [ $1 -eq  7 ] ; then echo "The standard output file for the job could not be opened." ;
-  elif [ $1 -eq  8 ] ; then echo "The standard input file for the job could not be opened." ;
-  elif [ $1 -eq  9 ] ; then echo "The standard output stream for the job could not be opened." ;
-  elif [ $1 -eq 10 ] ; then echo "The standard input stream for the job could not be opened." ;
-  elif [ $1 -eq 11 ] ; then echo "An internal Condor protocol error was encountered when transferring files." ;
-  elif [ $1 -eq 12 ] ; then echo "The condor_starter failed to download input files." ;
-  elif [ $1 -eq 13 ] ; then echo "The condor_starter failed to upload output files." ;
-  elif [ $1 -eq 14 ] ; then echo "The initial working directory of the job cannot be accessed." ;
-  elif [ $1 -eq 15 ] ; then echo "The user requested the job be submitted on hold." ;
-  elif [ $1 -eq 16 ] ; then echo "Input files are being spooled." ;
-  elif [ $1 -eq 17 ] ; then echo "A standard universe job is not compatible with the condor_shadow version available on the submitting machine." ;
-  elif [ $1 -eq 18 ] ; then echo "An internal Condor protocol error was encountered when transferring files." ;
-  elif [ $1 -eq 19 ] ; then echo "<Keyword>_HOOK_PREPARE_JOB was defined but could not be executed or returned failure." ;
-  elif [ $1 -eq 20 ] ; then echo "The job missed its deferred execution time and therefore failed to run." ;
-  elif [ $1 -eq 21 ] ; then echo "The job was put on hold because WANT_HOLD in the machine policy was true." ;
-  elif [ $1 -eq 22 ] ; then echo "Unable to initialize user log." ;
-  # CMS-specific reasons? glexec
-  elif [ $1 -eq 28 ] ; then echo "error changing sandbox ownership to the user. (glexec)" ;
-  elif [ $1 -eq 30 ] ; then echo "error changing sandbox ownership to condor. (glexec)";
-  else echo "UNKNOWN HoldReasonCode $1" ; fi
-  return 0
-}
+# Condor Hold Reason Codes: http://research.cs.wisc.edu/htcondor/manual/v7.6/10_Appendix_A.html
