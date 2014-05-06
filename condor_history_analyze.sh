@@ -146,7 +146,7 @@ echo "        84 can map to 84 or 8020, since 8020%256=84."
 echo
 echo HELD JOBS IN THE PAST 24 HOURS:
 echo
-printf "%-20s %8s %8s %8s %10s %8s\n" "Site" "Held Jobs" "Users" "Pilots" "WC(d)" "Code"
+printf "%-20s %8s %8s %8s %10s %14s\n" "Site" "Held Jobs" "Users" "Pilots" "WC(d)" "        HoldReasonCode (most frequent)"
 
 grep "^JobStatus=5" $FILE | awk -v now=$NOW ' \
 {

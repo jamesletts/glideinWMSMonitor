@@ -19,5 +19,6 @@ Scripts:
 
    * condor_check:               Assembles a page of interesting data about glideinWMS pool jobs.
    * condor_check.sh:            Driver for condor_check.
+
    * condor_history_dump.sh:     Dumps schedd ClassAds for recently run jobs and the current queue.
    * condor_history_analyze.sh:  Analyzes the dump of the schedd ClassAds.
