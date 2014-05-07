@@ -137,7 +137,7 @@ for x in $COUNT_EXIT_CODES ; do
 done
 
 echo
-echo "N.B. Exit Code explanations taken from https://twiki.cern.ch/twiki/bin/viewauth/CMS/JobExitCodes."
+echo "N.B. Exit Code explanations taken from https://twiki.cern.ch/twiki/bin/view/CMSPublic/JobExitCodes."
 echo "     Only categories with more than 100 jobs are shown."
 echo "     Some ambiguity exists in the error codes from HTCondor. Additional possibilities for exit"
 echo "        code mappings are listed on the following line in those cases, e.g. HTCondor exit code"

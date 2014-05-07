@@ -1,2 +1,2 @@
-*/10   * * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_check.sh
-59 11,23 * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_history_dump.sh
+*/10 * * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_check.sh
+0 5,7,11,17,23 * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_history_dump.sh
