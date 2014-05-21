@@ -22,3 +22,8 @@ Scripts:
 
    * condor_history_dump.sh:     Dumps schedd ClassAds for recently run jobs and the current queue.
    * condor_history_analyze.sh:  Analyzes the dump of the schedd ClassAds.
+
+
+To do:
+
+   * Switch to using SiteDB API when possible? https://github.com/dmwm/WMCore/blob/master/src/python/WMCore/Services/SiteDB/SiteDB.py

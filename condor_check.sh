@@ -20,7 +20,9 @@ cat >> $OUTFILE <<EOF
 
 EOF
 # run analysis of analysis ops pool, with a time limit of 300s.
-alarm 300 $glideinWMSMonitor_RELEASE_DIR/condor_check glidein-collector-2.t2.ucsd.edu >> $OUTFILE
+COLLECTOR1=glidein-collector-2.t2.ucsd.edu
+COLLECTOR2=glidein-collector.t2.ucsd.edu
+alarm 400 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
 rc=$?
 
 cat >> $OUTFILE <<EOF
@@ -30,7 +32,9 @@ cat >> $OUTFILE <<EOF
 
 EOF
 # run analysis of global pool, with a time limit of 300s.
-alarm 300 $glideinWMSMonitor_RELEASE_DIR/condor_check vocms097.cern.ch short >> $OUTFILE
+COLLECTOR1=vocms097.cern.ch
+COLLECTOR2=vocms099.cern.ch
+alarm 100 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
 
 cat >> $OUTFILE <<EOF
 
@@ -38,13 +42,17 @@ cat >> $OUTFILE <<EOF
 ===================================================== PRODUCTION POOL =====================================================
 
 EOF
-alarm 300 $glideinWMSMonitor_RELEASE_DIR/condor_check vocms97.cern.ch short >> $OUTFILE
+COLLECTOR1=vocms97.cern.ch
+COLLECTOR2=unknown
+alarm 100 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
 
-# if everything ran correctly, then update the latest file:
 if [ $rc -eq 0 ] ; then
   LINKNAME=$glideinWMSMonitor_OUTPUT_DIR/latest.txt
   rm $LINKNAME
   ln -s $OUTFILE $LINKNAME
 fi
+
+# make a nice html page as a test:
+$glideinWMSMonitor_RELEASE_DIR/make_html_page.sh
 
 exit 0

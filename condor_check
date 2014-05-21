@@ -7,21 +7,23 @@ else
   source $glideinWMSMonitor_RELEASE_DIR/bashrc
 fi
 
-POOLNAME=$1
-SHORT=$2
+COLLECTOR1=$1
+COLLECTOR2=$2
+# Collector2 could be discovered, but not at CERN somehow.
+SHORT=$3
 if [ "X"$SHORT == "X" ] ; then SHORT="long" ; fi
 
 # Header
-echo Summary Table for glidinWMS pool $POOLNAME at `/bin/date -u`
+echo Summary Table for glidinWMS pool $COLLECTOR1 at `/bin/date -u`
 echo
 
 # Summary Table from the Collector
-condor_status -pool $POOLNAME -schedd || exit 2
+condor_status -pool $COLLECTOR1 -schedd || exit 2
 echo
 
 # Last Negotiation Cycle time
-negotime=`condor_status -pool $POOLNAME -nego -l | grep LastNegotiationCycleDuration0 | awk '{print $3}'` || exit 3
-echo "Negotiation time = ${negotime}s"
+negotime=`condor_status -pool $COLLECTOR1 -nego -l | grep LastNegotiationCycleDuration0 | awk '{print $3}'` || exit 3
+echo "Negotiation time (ideally under 300s) = ${negotime}s"
 echo
 
 # dont print the long table if asked
@@ -29,26 +31,36 @@ if [ $SHORT == "short" ] ; then
   exit 0 
 fi
 
+total1=`condor_status -schedd -total -pool $COLLECTOR1 | tail -1 | awk '{print int($2)}'`
+total2=`condor_status -schedd -total -pool $COLLECTOR2 | tail -1 | awk '{print int($2)}'`
+colldiff=`echo $total1 $total2 | awk '{print int($1-$2)}'`
+echo "Difference between collector total job counts: $total1 ($COLLECTOR1) - $total2 ($COLLECTOR2) = $colldiff"
+echo
+
+
 # get information from sitedb about pledges and se names by CMSSite name
 PLEDGES=`get_pledges_from_sitedb`
 SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
-# get information from dashboard about avg and max usage by CMSSite name
-USAGE=`dashboard_usage_by_site analysis "3 months ago"`
-MAXUSAGE=`dashboard_usage_by_site all "3 months ago"`
-
+# Get information from dashboard about avg and max usage by CMSSite name
 # Information from T2_US_Wisconsin before April 3, 2014 is inflated.
-USAGEUW=`dashboard_usage_by_site analysis "3 weeks ago"`
-MAXUSAGEUW=`dashboard_usage_by_site all "3 weeks ago"`
+#USAGE=`dashboard_usage_by_site analysis "3 months ago"`
+#MAXUSAGE=`dashboard_usage_by_site all "3 months ago"`
+#USAGEUW=`dashboard_usage_by_site analysis "3 weeks ago"`
+#MAXUSAGEUW=`dashboard_usage_by_site all "3 weeks ago"`
+USAGE=`dashboard_usage_by_site analysis "1 month ago"`
+MAXUSAGE=`dashboard_usage_by_site all "1 month ago"`
+USAGEUW=$USAGE
+MAXUSAGEUW=$MAXUSAGE
 
 # get information from SSB about site downtimes
 DOWNTIMES=`site_downtimes_from_ssb`
 
 # get claimed and running pilots, DESIRED_Sites for each pool:
-CLAIMED=`get_pilots_by_site $POOLNAME -claimed` || exit 4
-RUNNING=`get_pilots_by_site $POOLNAME`          || exit 5
-DESIRED=`get_DESIRED_Sites $POOLNAME`           || exit 6
-RUNNINGPROD=`get_pilots_by_site "vocms97.cern.ch"` || exit 7
+CLAIMED=`get_pilots_by_site $COLLECTOR1 -claimed` || exit 4
+RUNNING=`get_pilots_by_site $COLLECTOR1`          || exit 5
+DESIRED=`get_DESIRED_Sites  $COLLECTOR1`          || exit 6
+RUNNINGPROD=`get_pilots_by_site "vocms97.cern.ch"`|| exit 7
 
 # Print the table of pilots and pressure from queued jobs for each site
 printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Average" "Maximum" "Claimed" "Unclaimed" "Pressure" "Exclusive" "Running" "Maintenance"
@@ -151,11 +163,10 @@ cat << EOF
 Notes:
    * Pledges are 50% of the last pledge entered in SiteDB for the site. Tier-1 pledges are set to zero for
      analysis, even though analysis jobs can run at the Tier-1 sites.
-   * Usage statistics are from the last three months in Dashboard for analysis only.
-      * Usage numbers from Wisconsin in March are overinflated in the Dashboard before April 2014 so only the
-        past two weeks is used.
-   * The Site Table does not include DAG jobs (from CRAB3) which do not run at a DESIRED_Site, but rather on the 
-     schedd.
+   * Average Usage statistics are from the last month in Dashboard for activity=analysis only.
+   * Maximum Usage statistics are from the last month in Dashboard for all activities including production.
+   * The Site Table does not include DAG jobs (from CRAB3) which do not run at a DESIRED_Site, but rather 
+     on the schedd.
    * Sites are only listed in the Site Table if there is demand (running or queued) or pledged resources.
 EOF
 
