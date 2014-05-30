@@ -22,7 +22,7 @@ EOF
 # run analysis of analysis ops pool, with a time limit of 300s.
 COLLECTOR1=glidein-collector-2.t2.ucsd.edu
 COLLECTOR2=glidein-collector.t2.ucsd.edu
-alarm 400 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
+alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
 rc=$?
 
 cat >> $OUTFILE <<EOF
@@ -51,6 +51,16 @@ if [ $rc -eq 0 ] ; then
   rm $LINKNAME
   ln -s $OUTFILE $LINKNAME
 fi
+
+# be nice and clean up from failed runs
+
+rm /tmp/DESIRED.txt.*
+rm /tmp/DOWNTIMES.csv.*
+rm /tmp/PILOTS.txt.*
+rm /tmp/PLEDGES.txt.*
+rm /tmp/SELIST.sed.*
+rm /tmp/SITELIST.sed.*
+rm /tmp/USAGE.csv.*
 
 # make a nice html page as a test:
 $glideinWMSMonitor_RELEASE_DIR/make_html_page.sh

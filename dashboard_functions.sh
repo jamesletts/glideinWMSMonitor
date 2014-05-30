@@ -72,7 +72,6 @@ dashboard_usage_by_site() {
   echo "$OUTPUTFILE"
   return 0
 }
-#!/bin/bash
 
 dashboard_exit_status() {
   # print the exit status of jobs from the dashboard by site
