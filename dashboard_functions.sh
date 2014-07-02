@@ -17,6 +17,17 @@ site_downtimes_from_ssb() {
   return 0
 }
 
+dashboard_users() {
+  date1=$1
+  date2=$2
+  tier=$3
+  url="http://dashb-cms-job.cern.ch/dashboard/request.py/jobsummary-plot-or-table2?user=&site=&submissiontool=&application=&activity=&status=&check=submitted&tier=${tier}&sortby=user&ce=&rb=&grid=&jobtype=&submissionui=&dataset=&submissiontype=&task=&subtoolver=&genactivity=&outputse=&appexitcode=&accesstype=&date1=${date1}&date2=${date2}&prettyprint"
+  users=`curl -sk $url | grep \"name\": | grep -v "unknown/cmsdataops" | grep -v "unknown/unknown" | wc -l`
+  #curl -sk $url | grep \"name\": | sort
+  echo $users
+  return 0
+}
+
 dashboard_usage_by_site() {
   # function to print out a csv list of sites and avg and
   # max job slots used daily during the past TIMEFRAME of
@@ -77,23 +88,27 @@ dashboard_exit_status() {
   # print the exit status of jobs from the dashboard by site
   #
   # Usage:
-  #   dashboard_exit_status begin_date end_date activity
+  #   dashboard_exit_status begin_date end_date activity sitefilter="T1|T2|T3"
   #      where dates are in the form YYYY-mm-dd and activity=[analysis|production|all|analysistest]
   #
   # Output:
-  #   csv list by site: app-unknown,app-successful,app-failed,site-failed,cancelled,aborted,completed,site
+  #   #csv list by site: app-unknown,app-successful,app-failed,site-failed,cancelled,aborted,completed,site
+  #   csv list : nsites,completed,appsuccessful,successrate
 
   date1=$1
   date2=$2
   activity=$3
   url="http://dashb-cms-jobsmry.cern.ch/dashboard/request.py/jobnumbers_terminatedcsv?sites=All%20T3210&datatiers=All%20DataTiers&applications=All%20Application%20Versions&submissions=All%20Submission%20Types&accesses=All%20Access%20Types&activities=${activity}&sitesSort=7&start=${date1}&end=${date2}&timeRange=daily&granularity=daily&generic=0&sortBy=0&series=All&type=gstb"
-  curl -ks $url | dos2unix | awk -F\, ' 
+  curl -ks $url | dos2unix | awk -v sitefilter=$4 -F\, ' 
   BEGIN{
     completed=0
     appsuccessful=0
     nsites=0
   }
   {
+    if ( sitefilter=="T1" ) { if ( $8!~/^T1/ ) { next } }
+    if ( sitefilter=="T2" ) { if ( $8!~/^T2/ ) { next } }
+    if ( sitefilter=="T3" ) { if ( $8!~/^T3/ ) { next } }
     completed+=$7
     appsuccessful+=$2
     nsites+=1
@@ -157,34 +172,74 @@ dashboard_job_slots_used() {
   return 0
 }
 
-dashboard_report() {
+dashboard_user_report() {
+  GRANULARITY=$1
+  NUMBER_OF_PERIODS=$2
+  printf "%10s,%10s,%10s,%10s\n" date1 date2 nusers nuserst2
+  date1=`date -dlast-monday +%F`
+  for (( i=1; i<=$NUMBER_OF_PERIODS; i++ )) ; do
+    date2=$date1
+    date1=`date -d "$date2 -$GRANULARITY days" +%F`
+    nusers=`  dashboard_users $date1 $date2     | awk '{print $1}'`
+    nuserst2=`dashboard_users $date1 $date2 2.0 | awk '{print $1}'`
+    printf "%10s,%10s,%10s,%10s\n" $date1 $date2 $nusers $nuserst2
+  done
+  return
+}
+
+dashboard_job_report() {
 #
 #
 # ARGS: Granularity in days of the time period for the table
 # ARGS: Number of time periods to display
 GRANULARITY=$1
 NUMBER_OF_PERIODS=$2
-echo
-echo "Analysis Jobs Report for the past $NUMBER_OF_PERIODS periods of $GRANULARITY days."
-echo
-printf "%10s %10s %10s %10s %10s %10s %10s %10s %10s %10s %10s\n" \
-"Begin" "End" "Analysis" "Analysis"      "All" "Analysis" "Analysis" "Analysis" "Number"   "Number"  "App-"
-printf "%10s %10s %10s %10s %10s %10s %10s %10s %10s %10s %10s\n" \
-"Date" "Date" "Job Slots"    "Test" "Activity" "Job Slots" "Job Slots" "Job Slots"    "of Sites" "of Jobs" "Success"
-printf "%10s %10s %10s %10s %10s %10s %10s %10s %10s %10s %10s\n" \
-"    " "    " "Used"  "Job Slots"  "Job Slots" "at T1"    "at T2"    "at T3"    " " "Completed" "Rate"
+printf "%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s\n" \
+  date1 date2 \
+  ncrab2T1 ncrab3T1 nallT1 jscrab2T1 jscrab3T1 jsallT1 \
+  ncrab2T2 ncrab3T2 nallT2 jscrab2T2 jscrab3T2 jsallT2 \
+  ncrab2T3 ncrab3T3 nallT3 jscrab2T3 jscrab3T3 jsallT3 
+
 date1=`date -dlast-monday +%F`
+
+date1="2012-04-09"
+GRANULARITY=7
+NUMBER_OF_PERIODS=4
+
 for (( i=1; i<=$NUMBER_OF_PERIODS; i++ )) ; do
   date2=$date1
   date1=`date -d "$date2 -$GRANULARITY days" +%F`
-  printf "%10s %10s " $date1 $date2
-  dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{x+=$2}END{printf("%10i ",x)}'
-  dashboard_job_slots_used $date1 $date2 analysistest | awk -F, 'BEGIN{x=0}{x+=$2}END{printf("%10i ",x)}'
-  dashboard_job_slots_used $date1 $date2 all          | awk -F, 'BEGIN{x=0}{x+=$2}END{printf("%10i ",x)}'
-  dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{if($1~/^T1/){x+=$2}}END{printf("%10i ",x)}'
-  dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{if($1~/^T2/){x+=$2}}END{printf("%10i ",x)}'
-  dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{if($1~/^T3/){x+=$2}}END{printf("%10i ",x)}'
-  dashboard_exit_status    $date1 $date2 analysis     | awk -F, '{printf("%10i %10i %10.1f%\n",$1,$2,$4)}'
+
+  jscrab2T1=`dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{if($1~/^T1/){x+=$2}}END{print x}'`
+  jscrab3T1=`dashboard_job_slots_used $date1 $date2 analysistest | awk -F, 'BEGIN{x=0}{if($1~/^T1/){x+=$2}}END{print x}'`
+  jsallT1=`  dashboard_job_slots_used $date1 $date2 all          | awk -F, 'BEGIN{x=0}{if($1~/^T1/){x+=$2}}END{print x}'`
+
+  jscrab2T2=`dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{if($1~/^T2/){x+=$2}}END{print x}'`
+  jscrab3T2=`dashboard_job_slots_used $date1 $date2 analysistest | awk -F, 'BEGIN{x=0}{if($1~/^T2/){x+=$2}}END{print x}'`
+  jsallT2=`  dashboard_job_slots_used $date1 $date2 all          | awk -F, 'BEGIN{x=0}{if($1~/^T2/){x+=$2}}END{print x}'`
+
+  jscrab2T3=`dashboard_job_slots_used $date1 $date2 analysis     | awk -F, 'BEGIN{x=0}{if($1~/^T3/){x+=$2}}END{print x}'`
+  jscrab3T3=`dashboard_job_slots_used $date1 $date2 analysistest | awk -F, 'BEGIN{x=0}{if($1~/^T3/){x+=$2}}END{print x}'`
+  jsallT3=`  dashboard_job_slots_used $date1 $date2 all          | awk -F, 'BEGIN{x=0}{if($1~/^T3/){x+=$2}}END{print x}'`
+
+  ncrab2T1=`dashboard_exit_status $date1 $date2 analysis T1     | awk -F, '{print $2}'`
+  ncrab3T1=`dashboard_exit_status $date1 $date2 analysistest T1 | awk -F, '{print $2}'`
+  nallT1=`  dashboard_exit_status $date1 $date2 all T1          | awk -F, '{print $2}'`
+
+  ncrab2T2=`dashboard_exit_status $date1 $date2 analysis T2     | awk -F, '{print $2}'`
+  ncrab3T2=`dashboard_exit_status $date1 $date2 analysistest T2 | awk -F, '{print $2}'`
+  nallT2=`  dashboard_exit_status $date1 $date2 all T2          | awk -F, '{print $2}'`
+
+  ncrab2T3=`dashboard_exit_status $date1 $date2 analysis T3     | awk -F, '{print $2}'`
+  ncrab3T3=`dashboard_exit_status $date1 $date2 analysistest T3 | awk -F, '{print $2}'`
+  nallT3=`  dashboard_exit_status $date1 $date2 all T3          | awk -F, '{print $2}'`
+
+  printf "%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s\n" \
+    $date1 $date2 \
+    $ncrab2T1 $ncrab3T1 $nallT1 $jscrab2T1 $jscrab3T1 $jsallT1 \
+    $ncrab2T2 $ncrab3T2 $nallT2 $jscrab2T2 $jscrab3T2 $jsallT2 \
+    $ncrab2T3 $ncrab3T3 $nallT3 $jscrab2T3 $jscrab3T3 $jsallT3 
+
 done
 return
 }
