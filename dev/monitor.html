@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<style type="text/css" title="currentStyle">
+      @import "css/jquery.dataTables.css";
+    </style>
+    <script type="text/javascript" src="jslibs/jquery.js"></script>
+    <script type="text/javascript" src="jslibs/jquery.dataTables.js"></script>
+  <head>
+    <title>test</title>
+  </head>
+
+  <body style="font-family:'Courier'">
+    <h1>glideinWMS Pool Data</h1>
+
+    <h2>Global Pool Summary</h2>
+    <table cellpadding="1" cellspacing="0" border="0" class="display" id="global_summary"></table>
+    <h2>Global Pool By Site</h2>
+    <table cellpadding="1" cellspacing="0" border="0" class="display" id="global_bysite"></table>
+
+    <script type="text/javascript">
+
+    function create_header(data) {
+      var dic=[];
+      $.each( data["header"], function( key, val ) {
+                dic.push({ "title" : val} );
+              });
+      return dic;
+    }
+
+    function create_table(table_name, data) {
+     var mdata=data["data"];
+     var hdr=create_header(data);
+     $(table_name).DataTable({"data" : mdata, "columns" : hdr});
+    }
+
+      {
+        $.getJSON( "./monitor-summary-global-2014-07-03-Z10:14.json", 
+                   function( data ) {
+                     create_table("#global_summary",data["glideinWMS Pool Summary"]["Schedd Table"]);
+                   });
+
+        $.getJSON( "./monitor-site-global-2014-07-03-Z10:14.json", 
+                   function( data ) {
+                     create_table("#global_bysite",data["glideinWMS Pool Site"]["Site Table"]);
+                   });
+
+      }
+
+    </script>
+
+  </body>
+</html>
