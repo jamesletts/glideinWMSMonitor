@@ -26,7 +26,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Partitionable glidein Cpus\": {"
@@ -38,7 +38,7 @@ condor_status -pool $COLLECTOR        \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Partitionable retiring glideins\": {"
@@ -50,7 +50,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Partitionable retiring glidein Cpus\": {"
@@ -63,7 +63,7 @@ condor_status -pool $COLLECTOR        \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Dynamic glideins\": {"
@@ -74,7 +74,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Dynamic glidein Cpus\": {"
@@ -86,7 +86,7 @@ condor_status -pool $COLLECTOR        \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Dynamic retiring glideins\": {"
@@ -98,7 +98,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Dynamic retiring glidein Cpus\": {"
@@ -111,7 +111,7 @@ condor_status -pool $COLLECTOR        \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static glideins\": {"
@@ -122,7 +122,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static glidein Cpus\": {"
@@ -134,7 +134,7 @@ condor_status -pool $COLLECTOR        \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static retiring glideins\": {"
@@ -146,7 +146,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static retiring glidein Cpus\": {"
@@ -159,7 +159,7 @@ condor_status -pool $COLLECTOR        \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static multi-core glideins\": {"
@@ -171,7 +171,7 @@ condor_status -pool $COLLECTOR        \
 grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static multi-core glidein Cpus\": {"
@@ -184,7 +184,7 @@ grep ^slot[0-9]*\@ | awk '{print $2 " " $3 " " $4 }' | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static multi-core retiring glideins\": {"
@@ -197,7 +197,7 @@ condor_status -pool $COLLECTOR        \
 grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Static multi-core retiring glidein Cpus\": {"
@@ -211,7 +211,7 @@ grep ^slot[0-9]*\@ | awk '{print $2 " " $3 " " $4 }' | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Total glideins\": {"
@@ -222,7 +222,7 @@ condor_status -pool $COLLECTOR \
 | sort |uniq -c \
 | awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
 echo "      ]"
-echo "    }"
+echo "    },"
 
 
 echo "    \"Total Cpus\": {"
@@ -232,6 +232,7 @@ condor_status -pool $COLLECTOR \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity \
 | awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort |uniq -c \
 | awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
+echo "        [null,null,0]"
 echo "      ]"
 echo "    }"
 
