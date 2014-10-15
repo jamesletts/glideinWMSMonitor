@@ -1,6 +1,6 @@
 #!/bin/bash
-# DAG jobs not included in held table.
-# report CRAB3 vs CRAB2 jobs
+# To do: Report CRAB3 vs CRAB2 jobs
+#        DAG jobs remove from held table
 
 POOLNAME=$1
 

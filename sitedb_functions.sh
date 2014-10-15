@@ -1,12 +1,19 @@
 #!/bin/bash
 
 get_federation_pledges() {
+  if [ ! -z $1 ] ; then
+    year=$1
+  else 
+    year=2014
+  fi
+
   # This function finds the pledges for certain federated Tier-2 sites
   # from information in REBUS. Unfortunately the list of federations
   # and their membership is not get discoverable.
 
-  url="http://wlcg-rebus.cern.ch/apps/pledges/resources/2014/all/csv"
+  url="http://wlcg-rebus.cern.ch/apps/pledges/resources/$year/all/csv"
   curl -ks $url | awk -F\, '
+  BEGIN{totalpledge=0}
   {
     federation=$3
     cpu=$4
@@ -41,7 +48,11 @@ get_federation_pledges() {
     if ( federation == "SouthGrid" && cpu == "CPU" ) {
       printf("T2_UK_SGrid_RALPP,%i,FEDERATION\n",pledge/10.)
     }
-  }'
+    if ( cpu == "CPU" ) {
+      totalpledge+=pledge
+    }
+  }
+  END{printf("All_Sites,%i,TOTAL\n",totalpledge/10.)}'
   return 0
 }
 

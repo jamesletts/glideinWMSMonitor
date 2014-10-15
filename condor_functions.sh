@@ -30,6 +30,7 @@ getClassAds() {
       -format 'RemoteUserCpu=%i\ '          RemoteUserCpu \
       -format 'LastRemoteHost=%s\ '         LastRemoteHost \
       -format 'MATCH_GLIDEIN_CMSSite=%s\ '  MATCH_GLIDEIN_CMSSite \
+      -format 'MATCH_GLIDEIN_SEs=%s\ '      MATCH_GLIDEIN_SEs \
       -format 'DESRIED_Sites=%s\ '          DESIRED_Sites \
       -format 'DESRIED_SEs=%s\ '            DESIRED_SEs \
       -format 'Owner=%s\ '                  Owner \

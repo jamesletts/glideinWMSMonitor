@@ -60,15 +60,31 @@ EOF
 
 beginchart Jobs Time Running_Jobs Pending_Jobs >>$OUTFILE
 for file in $FILES ; do 
-  basename $file | awk -FZ '{print $2}' | awk -F\. '{printf("          [\x27%s\x27,",$1)}' >>$OUTFILE
-  grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | head -1 >>$OUTFILE
+  npools=`grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | wc -l`
+  if [ $npools -eq 3 ] ; then
+    basename $file | awk -FZ '{print $2}' | awk -F\. '{printf("          [\x27%s\x27,",$1)}' >>$OUTFILE
+    grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | head -1 >>$OUTFILE
+  fi
 done
-endchart Jobs 'Number of Running and Pending Jobs (Analysis Operations Pool)' >>$OUTFILE
+endchart Jobs 'Number of Running and Pending Jobs (Analysis Operations Pool - CRAB2)' >>$OUTFILE
+
+beginchart GlobJobs Time Running_Jobs Pending_Jobs >>$OUTFILE
+for file in $FILES ; do 
+  npools=`grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | wc -l`
+  if [ $npools -eq 3 ] ; then
+    basename $file | awk -FZ '{print $2}' | awk -F\. '{printf("          [\x27%s\x27,",$1)}' >>$OUTFILE
+    grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | tail -2 | head -1 >>$OUTFILE
+  fi
+done
+endchart GlobJobs 'Number of Running and Pending Jobs (Global Pool - CRAB3)' >>$OUTFILE
 
 beginchart ProdJobs Time Running_Jobs Pending_Jobs >>$OUTFILE
 for file in $FILES ; do 
-  basename $file | awk -FZ '{print $2}' | awk -F\. '{printf("          [\x27%s\x27,",$1)}' >>$OUTFILE
-  grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | tail -1 >>$OUTFILE
+  npools=`grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | wc -l`
+  if [ $npools -eq 3 ] ; then
+    basename $file | awk -FZ '{print $2}' | awk -F\. '{printf("          [\x27%s\x27,",$1)}' >>$OUTFILE
+    grep Total $file | awk '($1=="Total"){printf("%s,%s],\n",$2,$3)}' | tail -1 >>$OUTFILE
+  fi
 done
 endchart ProdJobs 'Number of Running and Pending Jobs (Monte Carlo Production Pool)' >>$OUTFILE
 
@@ -129,6 +145,7 @@ schedd_chart vo83  vocms83        >>$OUTFILE
 schedd_chart vo95  crab3test-2    >>$OUTFILE
 schedd_chart vo96  crab3test-3    >>$OUTFILE
 schedd_chart v109  crab3test-4    >>$OUTFILE
+schedd_chart v114  crab3test-5    >>$OUTFILE
 
 cat >>$OUTFILE <<EOF
     </script>
@@ -138,8 +155,9 @@ cat >>$OUTFILE <<EOF
   <h1 style="background-color:green;">CMS Analysis Monitoring for glideinWMS (remoteGlidein)</h1>
   </header>
   <div>
-    <div id="chart_Jobs"     style="width: 600px; height: 300px;"></div>
-    <div id="chart_ProdJobs" style="width: 600px; height: 300px;"></div>
+    <div id="chart_Jobs"     style="width: 700px; height: 300px;"></div>
+    <div id="chart_GlobJobs" style="width: 700px; height: 300px;"></div>
+    <div id="chart_ProdJobs" style="width: 700px; height: 300px;"></div>
   </div>
   <pre>
 EOF
@@ -160,6 +178,7 @@ cat >>$OUTFILE <<EOF
     <div id="chart_vo95" style="width: 600px; height: 300px;"></div>
     <div id="chart_vo96" style="width: 600px; height: 300px;"></div>
     <div id="chart_v109" style="width: 600px; height: 300px;"></div>
+    <div id="chart_v114" style="width: 600px; height: 300px;"></div>
   </div>
   </body>
 </html>

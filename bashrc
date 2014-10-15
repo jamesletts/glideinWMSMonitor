@@ -9,7 +9,7 @@ source /etc/profile.d/condor.sh
 # place for the output files
 export  glideinWMSMonitor_OUTPUT_DIR="/crabprod/CSstoragePath/Monitor"
 
-#################### MACE CHANGES ABOVE THIS LINE #################### 
+#################### MAKE CHANGES ABOVE THIS LINE #################### 
 
 # Discover the directory where the software sits:
 export  glideinWMSMonitor_RELEASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

@@ -202,9 +202,9 @@ printf "%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%1
 
 date1=`date -dlast-monday +%F`
 
-date1="2012-04-09"
-GRANULARITY=7
-NUMBER_OF_PERIODS=4
+#date1="2012-04-09"
+#GRANULARITY=7
+#NUMBER_OF_PERIODS=4
 
 for (( i=1; i<=$NUMBER_OF_PERIODS; i++ )) ; do
   date2=$date1

@@ -34,7 +34,7 @@ EOF
 # run analysis of global pool, with a time limit of 300s.
 COLLECTOR1=vocms097.cern.ch
 COLLECTOR2=vocms099.cern.ch
-alarm 100 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
+alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
 
 cat >> $OUTFILE <<EOF
 
@@ -44,13 +44,14 @@ cat >> $OUTFILE <<EOF
 EOF
 COLLECTOR1=vocms97.cern.ch
 COLLECTOR2=unknown
-alarm 100 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
+alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
+#alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
 
-if [ $rc -eq 0 ] ; then
+#if [ $rc -eq 0 ] ; then
   LINKNAME=$glideinWMSMonitor_OUTPUT_DIR/latest.txt
   rm $LINKNAME
   ln -s $OUTFILE $LINKNAME
-fi
+#fi
 
 # be nice and clean up from failed runs
 
@@ -63,6 +64,6 @@ rm /tmp/SITELIST.sed.*
 rm /tmp/USAGE.csv.*
 
 # make a nice html page as a test:
-$glideinWMSMonitor_RELEASE_DIR/make_html_page.sh
+#$glideinWMSMonitor_RELEASE_DIR/make_html_page.sh
 
 exit 0

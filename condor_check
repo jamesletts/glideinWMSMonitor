@@ -28,16 +28,29 @@ negotime=`condor_status -pool $COLLECTOR1 -nego -l | grep LastNegotiationCycleDu
 echo "Negotiation time (ideally under 300s) = ${negotime}s"
 echo
 
-# dont print the long table if asked
-if [ $SHORT == "short" ] ; then 
-  exit 0 
-fi
-
 total1=`condor_status -schedd -total -pool $COLLECTOR1 | tail -1 | awk '{print int($2)}'`
 total2=`condor_status -schedd -total -pool $COLLECTOR2 | tail -1 | awk '{print int($2)}'`
 colldiff=`echo $total1 $total2 | awk '{print int($1-$2)}'`
 echo "Difference between collector total job counts: $total1 ($COLLECTOR1) - $total2 ($COLLECTOR2) = $colldiff"
 echo
+
+#echo "Multi-core Pilot Status:"
+#condor_status -pool $COLLECTOR1 -const '(SlotType=!="Partitionable")' \
+#  -format '%s ' Name -format '%s ' State -format '%s\n' Activity | \
+#   grep    ^slot | awk '{print $2 " " $3 }' | sort | uniq -c
+#echo
+#echo "Single-core Pilot Status:"
+#condor_status -pool $COLLECTOR1 -const '(SlotType=!="Partitionable")' \
+#  -format '%s ' Name -format '%s ' State -format '%s\n' Activity | \
+#   grep -v ^slot | awk '{print $2 " " $3 }' | sort | uniq -c
+#echo
+#echo
+
+
+# dont print the long table if asked
+if [ $SHORT == "short" ] ; then 
+  exit 0 
+fi
 
 
 # get information from sitedb about pledges and se names by CMSSite name

@@ -16,109 +16,237 @@ echo "{"
 echo "  \"Multi-core pilot monitoring\": {"
 echo "    \"Collector\": \"$COLLECTOR\","
 echo "    \"Time\": `/bin/date +%s`,"
-echo "    \"Partitionable\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
+
+echo "    \"Partitionable glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
 condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Partitionable")' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
-
 echo "      ]"
 echo "    }"
-echo "    \"Partitionable, CurrentTime>GLIDEIN_ToRetire\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
+
+echo "    \"Partitionable glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Partitionable")' \
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Partitionable retiring glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
 condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Partitionable")' \
 -const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
-awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
-
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
 echo "    }"
-echo "    \"Dynamic\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
+
+echo "    \"Partitionable retiring glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Partitionable")' \
+-const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Dynamic glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
 condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Dynamic")' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
-awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
 echo "    }"
-echo "    \"Static\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
-condor_status -pool $COLLECTOR \
+
+echo "    \"Dynamic glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Dynamic")' \
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Dynamic retiring glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Dynamic")' \
+-const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
+-format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Dynamic retiring glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Dynamic")' \
+-const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Static glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Static")' \
--format '%s ' State -format '%s\n' Activity | sort | uniq -c \
-| awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
-
+-format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
 echo "    }"
-echo "    \"Static Multi-core\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
-condor_status -pool $COLLECTOR \
+
+echo "    \"Static glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Static")' \
--format '%s ' Name  -format '%s ' State -format '%s\n' Activity \
-| grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c \
-| awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
-
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
 echo "    }"
-echo "    \"Static Multi-core, CurrentTime>GLIDEIN_ToRetire\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
-condor_status -pool $COLLECTOR \
+
+echo "    \"Static retiring glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Static")' \
 -const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
--format '%s ' Name  -format '%s ' State -format '%s\n' Activity \
-| grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c \
-| awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
-
+-format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
 echo "    }"
-echo "    \"Total Cpus\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
+
+
+echo "    \"Static retiring glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
 echo "      \"data\": ["
-
-condor_status -pool $COLLECTOR \
--format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity \
-| awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort |uniq -c \
-| awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Static")' \
+-const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
 echo "      ]"
 echo "    }"
-echo "    \"Totals\": {"
-echo "      \"header\": [\"State\",\"Activity\",\"Count\"],"
-echo "      \"data\": ["
 
+
+echo "    \"Static multi-core glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Static")' \
+-format '%s ' Name  -format '%s ' State -format '%s\n' Activity | \
+grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Static multi-core glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Static")' \
+-format '%s ' Name  -format '%s ' Cpus -format '%s ' State -format '%s\n' Activity | \
+grep ^slot[0-9]*\@ | awk '{print $2 " " $3 " " $4 }' | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Static multi-core retiring glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Static")' \
+-const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
+-format '%s ' Name  -format '%s ' State -format '%s\n' Activity | \
+grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Static multi-core retiring glidein Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR        \
+-const '(SlotType=?="Static")' \
+-const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
+-format '%s ' Name  -format '%s ' Cpus -format '%s ' State -format '%s\n' Activity | \
+grep ^slot[0-9]*\@ | awk '{print $2 " " $3 " " $4 }' | \
+awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "      ]"
+echo "    }"
+
+
+echo "    \"Total glideins\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"glideins\"],"
+echo "      \"data\": ["
 condor_status -pool $COLLECTOR \
 -format '%s ' State -format '%s\n' Activity \
 | sort |uniq -c \
 | awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
-
 echo "      ]"
 echo "    }"
+
+
+echo "    \"Total Cpus\": {"
+echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
+echo "      \"data\": ["
+condor_status -pool $COLLECTOR \
+-format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity \
+| awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort |uniq -c \
+| awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
+echo "      ]"
+echo "    }"
+
+
 echo "  }"
 echo "}"
 
+
 echo
+echo "For comparison:"
 echo condor_status -total -pool $COLLECTOR
 condor_status -total -pool $COLLECTOR
 
+
+return
 }
 
 JSONFILE=${glideinWMSMonitor_OUTPUT_DIR}-json/monitor-multicore-anaops-`/bin/date +%F-Z%R -u`.json
