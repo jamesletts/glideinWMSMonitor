@@ -25,6 +25,7 @@ condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Partitionable")' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -37,6 +38,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -49,6 +51,7 @@ condor_status -pool $COLLECTOR        \
 -const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -62,6 +65,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -73,6 +77,7 @@ condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Dynamic")' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -85,6 +90,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -97,6 +103,7 @@ condor_status -pool $COLLECTOR        \
 -const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -110,6 +117,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -121,6 +129,7 @@ condor_status -pool $COLLECTOR        \
 -const '(SlotType=?="Static")' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -133,6 +142,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -145,6 +155,7 @@ condor_status -pool $COLLECTOR        \
 -const '(GLIDEIN_ToRetire=!=UNDEFINED)&&(CurrentTime>GLIDEIN_ToRetire)' \
 -format '%s ' State -format '%s\n' Activity | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -158,6 +169,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Cpus  -format '%s ' State -format '%s\n' Activity | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -170,6 +182,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Name  -format '%s ' State -format '%s\n' Activity | \
 grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -183,6 +196,7 @@ condor_status -pool $COLLECTOR        \
 grep ^slot[0-9]*\@ | awk '{print $2 " " $3 " " $4 }' | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -196,6 +210,7 @@ condor_status -pool $COLLECTOR        \
 -format '%s ' Name  -format '%s ' State -format '%s\n' Activity | \
 grep ^slot[0-9]*\@ | awk '{print $2 " " $3 }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -210,6 +225,7 @@ condor_status -pool $COLLECTOR        \
 grep ^slot[0-9]*\@ | awk '{print $2 " " $3 " " $4 }' | \
 awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
 awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -221,6 +237,7 @@ condor_status -pool $COLLECTOR \
 -format '%s ' State -format '%s\n' Activity \
 | sort |uniq -c \
 | awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
+echo "        [null,null,0]"
 echo "      ]"
 echo "    },"
 
@@ -239,12 +256,6 @@ echo "    }"
 
 echo "  }"
 echo "}"
-
-
-echo
-echo "For comparison:"
-echo condor_status -total -pool $COLLECTOR
-condor_status -total -pool $COLLECTOR
 
 
 return
