@@ -36,6 +36,7 @@ getClassAds() {
       -format 'Owner=%s\ '                  Owner \
       -format 'AccountingGroup=%s\ '        AccountingGroup \
       -format 'Iwd=%s\ '                    Iwd \
+      -format 'CRAB_ReqName=%s\ '           CRAB_ReqName \
       -format 'HoldReasonCode=%i\ '         HoldReasonCode \
       -format 'HoldReasonSubCode=%i\ '      HoldReasonSubCode \
       -format 'HoldReason=%s\ '             HoldReason \
@@ -137,7 +138,7 @@ condor_exit_codes() {
   #
   # grep the explanation of a particular code(s).
   #
-  grep \- $FILE  | grep -o [0-9]*\ \-\ .*  | sed 's/<.*>//g' \
+  grep \- $FILE  | grep -v Topic | grep -o [0-9]*\ \-\ .*  | sed 's/<.*>//g' \
     | awk -F\- -v code=$CONDOR_EXIT_CODE '(code==$1%256){print $0}' 
   return 0
 }
