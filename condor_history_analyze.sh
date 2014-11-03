@@ -1,8 +1,13 @@
 #!/bin/bash
 # To do: Report CRAB3 vs CRAB2 jobs
 #        DAG jobs remove from held table
+#
+# AccountingGroup=production are production jobs
+# then GlobalJobId=crab3 are CRAB3 jobs
+# rest are CRAB2 
 
 POOLNAME=$1
+FILE=$2
 
 if [ -z $POOLNAME ] ; then
   echo "ERROR: Please specify a pool name."
@@ -16,9 +21,16 @@ else
   source $glideinWMSMonitor_RELEASE_DIR/bashrc
 fi
 
-# get the latest dumped history file from the web server:
-FILE=$glideinWMSMonitor_OUTPUT_DIR/`ls -1rt /crabprod/CSstoragePath/Monitor \
-  | grep ^monitor-anaops-history | grep \.txt$ | tail -1`
+# get the latest dumped history file from the web server if not defined on command line
+if [ -z $FILE ] ; then
+  FILE=$glideinWMSMonitor_OUTPUT_DIR/`ls -1rt /crabprod/CSstoragePath/Monitor \
+    | grep ^monitor-anaops-history | grep \.txt$ | tail -1`
+  if [ $POOLNAME == 'vocms097.cern.ch' ] ; then
+    FILE=$glideinWMSMonitor_OUTPUT_DIR/`ls -1rt /crabprod/CSstoragePath/Monitor \
+      | grep ^monitor-global-history | grep \.txt$ | tail -1`
+  fi
+fi
+
 NOW=`ls -l --time-style=+%s $FILE | awk '{print $6}'`
 
 echo HISTORY FILE: $FILE
@@ -137,11 +149,15 @@ for x in $COUNT_EXIT_CODES ; do
 done
 
 echo
-echo "N.B. Exit Code explanations taken from https://twiki.cern.ch/twiki/bin/view/CMSPublic/JobExitCodes."
-echo "     Only categories with more than 100 jobs are shown."
-echo "     Some ambiguity exists in the error codes from HTCondor. Additional possibilities for exit"
+echo "N.B."
+echo "   * Exit Code explanations taken from https://twiki.cern.ch/twiki/bin/view/CMSPublic/JobExitCodes."
+echo "   * Only categories with more than 100 jobs are shown."
+echo "   * Some ambiguity exists in the error codes from HTCondor. Additional possibilities for exit"
 echo "        code mappings are listed on the following line in those cases, e.g. HTCondor exit code"
 echo "        84 can map to 84 or 8020, since 8020%256=84."
+echo "   * In case someone is trying to make Crab2/3 comparisons, note that jobs failed with exit code"
+echo "        506* (hit RSS/time boundary) in Crab2 appear as removed with no exit code in Crab3."
+
 
 echo
 echo HELD JOBS IN THE PAST 24 HOURS:
@@ -239,13 +255,13 @@ END {
 }
 ' | grep ^T | sort
 
-echo
-echo
-echo USER PRIORITIES:
-echo
-condor_userprio -all -pool $POOLNAME
+#echo
+#echo
+#echo USER PRIORITIES:
+#echo
+#condor_userprio -all -pool $POOLNAME
 #condor_userprio -allusers -all -pool $POOLNAME
 
-$glideinWMSMonitor_RELEASE_DIR/debug.sh $FILE
+$glideinWMSMonitor_RELEASE_DIR/debug.sh $FILE $POOLNAME
 
 exit

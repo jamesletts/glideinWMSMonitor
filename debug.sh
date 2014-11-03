@@ -1,6 +1,7 @@
 #!/bin/bash
 
 FILE=$1
+POOLNAME=$2
 export TZ=UTC0
 
 echo
@@ -9,7 +10,7 @@ echo
 echo HISTORY FILE: $FILE
 echo
 printf "%-35s %8s %-35s\n" "schedd Name" "#Jobs" "Earliest Entry Time"
-SCHEDDS=`condor_status -schedd -format '%s\n' Name`
+SCHEDDS=`condor_status -schedd -pool $POOLNAME -format '%s\n' Name`
 for SCHEDD in $SCHEDDS ; do
   n=`       cat $FILE | grep $SCHEDD\# | wc -l`
   earliest=`cat $FILE | grep $SCHEDD\# | grep -o 'EnteredCurrentStatus=[0-9]*' \
