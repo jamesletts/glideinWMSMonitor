@@ -9,20 +9,20 @@ print "0UNIX time,Date,Time,Pool Name,",
 print "All,",
 print "Static,",
 print "Static Retiring,",
-print "Partitionable,",
-print "Partitionable Retiring,",
+print "Dynamic+Partitionable,",
+print "Dynamic+Partitionable Retiring,",
 
 print "All Idle,",
 print "Static Idle,",
 print "Static Retiring Idle,",
-print "Partitionable Idle,",
-print "Partitionable Retiring Idle,",
+print "Dynamic+Partitionable Idle,",
+print "Dynamic+Partitionable Retiring Idle,",
 
 print "All Idle %,",
 print "Static Idle %,",
 print "Static Retiring Idle %",
-print "Partitionable Idle %,",
-print "Partitionable Retiring Idle%"
+print "Dynamic+Partitionable Idle %,",
+print "Dynamic+Partitionable Retiring Idle%"
 
 FILES=glob.glob("/crabprod/CSstoragePath/Monitor-json/monitor-multicore-*.json")
 for FILE in FILES :

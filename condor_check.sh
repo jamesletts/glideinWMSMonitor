@@ -16,17 +16,6 @@ OUTFILE=$glideinWMSMonitor_OUTPUT_DIR/monitor-anaops-`/bin/date +%F-Z%R -u`.txt
 
 cat >> $OUTFILE <<EOF
 
-======================================================= ANAOPS POOL =======================================================
-
-EOF
-# run analysis of analysis ops pool, with a time limit of 300s.
-COLLECTOR1=glidein-collector-2.t2.ucsd.edu
-COLLECTOR2=glidein-collector.t2.ucsd.edu
-alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
-rc=$?
-
-cat >> $OUTFILE <<EOF
-
 
 ======================================================= GLOBAL POOL =======================================================
 
@@ -39,13 +28,23 @@ alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >>
 cat >> $OUTFILE <<EOF
 
 
+======================================================= GLOBAL POOL ITB ==================================================
+
+EOF
+# run analysis of global pool, with a time limit of 300s.
+COLLECTOR1=vocms056.cern.ch
+COLLECTOR2=unknown
+alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
+cat >> $OUTFILE <<EOF
+
+
 ===================================================== PRODUCTION POOL =====================================================
 
 EOF
 COLLECTOR1=vocms97.cern.ch
 COLLECTOR2=unknown
-alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
-#alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
+#alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
+alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
 
 #if [ $rc -eq 0 ] ; then
   LINKNAME=$glideinWMSMonitor_OUTPUT_DIR/latest.txt

@@ -27,10 +27,10 @@ $glideinWMSMonitor_RELEASE_DIR/condor_history_analyze.sh $POOLNAME > ${OUTFILE}.
 mv ${OUTFILE}.tmp $OUTFILE
 
 
-POOLNAME="glidein-collector-2.t2.ucsd.edu"
-OUTFILE=$glideinWMSMonitor_OUTPUT_DIR/latest-overflow.txt
-$glideinWMSMonitor_RELEASE_DIR/condor_history_analyze_overflow.sh $POOLNAME > ${OUTFILE}.tmp
-mv ${OUTFILE}.tmp $OUTFILE
+#POOLNAME="glidein-collector-2.t2.ucsd.edu"
+#OUTFILE=$glideinWMSMonitor_OUTPUT_DIR/latest-overflow.txt
+#$glideinWMSMonitor_RELEASE_DIR/condor_history_analyze_overflow.sh $POOLNAME > ${OUTFILE}.tmp
+#mv ${OUTFILE}.tmp $OUTFILE
 
 POOLNAME="vocms097.cern.ch"
 OUTFILE=$glideinWMSMonitor_OUTPUT_DIR/latest-global-history.txt

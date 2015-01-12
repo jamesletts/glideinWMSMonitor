@@ -32,6 +32,7 @@ grep MATCH_GLIDEIN $INPUTFILE | awk ' \
     overflow="yes"
     for ( i in MATCH_GLIDEIN_CMSSite ) {
       for ( j in DESIRED_Sites ) { 
+        print "DEBUG " MATCH_GLIDEIN_CMSSite[i] " " DESIRED_Sites[j]
         if ( MATCH_GLIDEIN_CMSSite[i]==DESIRED_Sites[j] ) {
           overflow="no"
           break
@@ -41,6 +42,7 @@ grep MATCH_GLIDEIN $INPUTFILE | awk ' \
   }
 
   # print out a new history file with only overflow jobs
+  print "DEBUG->" overflow
   if ( overflow=="yes" ) { print $0 }
 }'
 
