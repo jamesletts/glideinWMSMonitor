@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# TODO: put raw outputs in json 
+# TODO: 
+#   put raw outputs in json 
+#   pressure from analysis and production separately
 
 if [ -z $glideinWMSMonitor_RELEASE_DIR ] ; then
   echo "ERROR: glideinWMSMonitor source code missing."
@@ -11,9 +13,7 @@ fi
 
 COLLECTOR1=$1
 COLLECTOR2=$2
-# Collector2 could be discovered, but not at CERN somehow.
-SHORT=$3
-if [ "X"$SHORT == "X" ] ; then SHORT="long" ; fi
+# Collector2 could be discovered
 
 # Header
 echo Summary Table for glidinWMS pool $COLLECTOR1 at `/bin/date -u`
@@ -28,30 +28,13 @@ negotime=`condor_status -pool $COLLECTOR1 -nego -l | grep LastNegotiationCycleDu
 echo "Negotiation time (ideally under 300s) = ${negotime}s"
 echo
 
-total1=`condor_status -schedd -total -pool $COLLECTOR1 | tail -1 | awk '{print int($2)}'`
-total2=`condor_status -schedd -total -pool $COLLECTOR2 | tail -1 | awk '{print int($2)}'`
-colldiff=`echo $total1 $total2 | awk '{print int($1-$2)}'`
-echo "Difference between collector total job counts: $total1 ($COLLECTOR1) - $total2 ($COLLECTOR2) = $colldiff"
-echo
-
-#echo "Multi-core Pilot Status:"
-#condor_status -pool $COLLECTOR1 -const '(SlotType=!="Partitionable")' \
-#  -format '%s ' Name -format '%s ' State -format '%s\n' Activity | \
-#   grep    ^slot | awk '{print $2 " " $3 }' | sort | uniq -c
-#echo
-#echo "Single-core Pilot Status:"
-#condor_status -pool $COLLECTOR1 -const '(SlotType=!="Partitionable")' \
-#  -format '%s ' Name -format '%s ' State -format '%s\n' Activity | \
-#   grep -v ^slot | awk '{print $2 " " $3 }' | sort | uniq -c
-#echo
-#echo
-
-
-# dont print the long table if asked
-if [ $SHORT == "short" ] ; then 
-  exit 0 
+if [ $COLLECTOR2 != "unknown" ] ; then
+  total1=`condor_status -schedd -total -pool $COLLECTOR1 | tail -1 | awk '{print int($2)}'`
+  total2=`condor_status -schedd -total -pool $COLLECTOR2 | tail -1 | awk '{print int($2)}'`
+  colldiff=`echo $total1 $total2 | awk '{print int($1-$2)}'`
+  echo "Difference between collector total job counts: $total1 ($COLLECTOR1) - $total2 ($COLLECTOR2) = $colldiff"
+  echo
 fi
-
 
 # get information from sitedb about pledges and se names by CMSSite name
 PLEDGES=`get_pledges_from_sitedb`
@@ -59,14 +42,8 @@ SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
 # Get information from dashboard about avg and max usage by CMSSite name
 # Information from T2_US_Wisconsin before April 3, 2014 is inflated.
-#USAGE=`dashboard_usage_by_site analysis "3 months ago"`
-#MAXUSAGE=`dashboard_usage_by_site all "3 months ago"`
-#USAGEUW=`dashboard_usage_by_site analysis "3 weeks ago"`
-#MAXUSAGEUW=`dashboard_usage_by_site all "3 weeks ago"`
-USAGE=`dashboard_usage_by_site analysis "1 month ago"`
-MAXUSAGE=`dashboard_usage_by_site all "1 month ago"`
-USAGEUW=$USAGE
-MAXUSAGEUW=$MAXUSAGE
+ANAUSAGE=`dashboard_usage_by_site analysis "1 month ago"`
+ALLUSAGE=`dashboard_usage_by_site all "1 month ago"`
 
 # get information from SSB about site downtimes
 DOWNTIMES=`site_downtimes_from_ssb`
@@ -75,11 +52,10 @@ DOWNTIMES=`site_downtimes_from_ssb`
 CLAIMED=`get_pilots_by_site $COLLECTOR1 -claimed` || exit 4
 RUNNING=`get_pilots_by_site $COLLECTOR1`          || exit 5
 DESIRED=`get_DESIRED_Sites  $COLLECTOR1`          || exit 6
-RUNNINGPROD=`get_pilots_by_site "vocms97.cern.ch"`|| exit 7
 
 # Print the table of pilots and pressure from queued jobs for each site
-printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Average" "Maximum" "Claimed" "Unclaimed" "Pressure" "Exclusive" "Running" "Maintenance"
-printf "%30s%10s%10s%10s%40s%10s\n" "Updated" "Analysis" "Usage" "Usage" "Pressure" "Prod"
+printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Analysis" "Any Actv." "Claimed" "Unclaimed" "Pressure" "Exclusive" "Maintenance"
+printf "%30s%10s%10s%10s%40s%10s\n" "Updated" "Analysis" "Usage 1m" "Usage 1m" "Pressure"
 echo
 
 # Sum up some interesting quantities:
@@ -88,8 +64,8 @@ totalclaimed=0
 totalunclaimed=0
 totalexclusivepressure=0
 totalpledge=0
-totalavgusage=0
-totalmaxusage=0
+totalanausage=0
+totalallusage=0
 
 # Loop over sites for the table:
 sites=`cat $SEDFILE | awk -F\/ '{print $3}' | sort | uniq`
@@ -105,11 +81,6 @@ for site in $sites ; do
   if [ "X"$unclaimed == "X" ] ; then unclaimed=0 ; fi
   totalunclaimed=$[$totalunclaimed+$unclaimed]
 
-  # How many production pilots running at the site
-  runprod=`grep \{$site\} $RUNNINGPROD | awk '{print $1}'`
-  if [ "X"$runprod == "X" ] ; then runprod=0 ; fi
-  totalrunprod=$[$totalrunprod+$runprod]
-
   # Get queeud jobs for site (not exclusively):
   pressure=`grep $site $DESIRED | wc -l`
 
@@ -119,21 +90,8 @@ for site in $sites ; do
 
   # Extract pledge for this site (total for all activities):
   # Federation pledges may have duplicated entries (one SiteDB, one REBUS), so take the last one.
-  pledge=`grep ^$site\, $PLEDGES | tail -1 | awk -F\, '{print int($2/2.)}'`
+  pledge=`grep ^$site\, $PLEDGES | tail -1 | awk -F\, '{print int($2)}'`
   if [ "X"$pledge == "X" ] ; then pledge=0 ; fi
-
-  # for cern and T1 sites, analysis gets 5% of the total pledge, or 1/10 of 50%.
-  echo $site | grep ^T0 >> /dev/null
-  rc=$?
-  if [ $rc -eq 0 ] ; then
-    pledge=`echo $pledge | awk '{print int($1/10.)}'`
-  fi
-  echo $site | grep ^T1 >> /dev/null
-  rc=$?
-  if [ $rc -eq 0 ] ; then
-    pledge=`echo $pledge | awk '{print int($1/10.)}'`
-  fi
-
   totalpledge=$[$totalpledge+$pledge]
 
   # Extract date of the pledge
@@ -141,20 +99,14 @@ for site in $sites ; do
   if [ "X"$validityofpledge == "X" ] ; then validityofpledge="N/A" ; fi
   
   # Extract average job slots at site from Dashboard (all activities including analysis and production):
-  avgusage=`grep ^$site\, $USAGE | awk -F\, '{print int($2)}'`
-  if [ $site == "T2_US_Wisconsin" ] ; then 
-    avgusage=`grep ^$site\, $USAGEUW | awk -F\, '{print int($2)}'`
-  fi 
+  avgusage=`grep ^$site\, $ANAUSAGE | awk -F\, '{print int($2)}'`
   if [ "X"$avgusage == "X" ] ; then avgusage=0 ; fi
-  totalavgusage=$[$totalavgusage+$avgusage]
+  totalanausage=$[$totalanausage+$avgusage]
 
   # Extract max job slots at site from Dashboard (all activities including analysis and production):
-  maxusage=`grep ^$site\, $MAXUSAGE | awk -F\, '{print int($3)}'`
-  if [ $site == "T2_US_Wisconsin" ] ; then 
-    maxusage=`grep ^$site\, $MAXUSAGEUW | awk -F\, '{print int($3)}'`
-  fi 
-  if [ "X"$maxusage == "X" ] ; then maxusage=0 ; fi
-  totalmaxusage=$[$totalmaxusage+$maxusage]
+  allusage=`grep ^$site\, $ALLUSAGE | awk -F\, '{print int($3)}'`
+  if [ "X"$allusage == "X" ] ; then allusage=0 ; fi
+  totalallusage=$[$totalallusage+$allusage]
 
   # downtimes
   downtime=`grep ^$site\, $DOWNTIMES | awk -F\, '{print $2}'`
@@ -163,29 +115,26 @@ for site in $sites ; do
   # skip meaningless entries, no pledge, no demand
   if [ $[$pledge+$claimed+$unclaimed+$exclusivepressure] -eq 0 ] ; then continue ; fi
  
-  printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" $site $validityofpledge $pledge $avgusage $maxusage $claimed $unclaimed $pressure $exclusivepressure $runprod "$downtime"
+  printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" $site $validityofpledge $pledge $avgusage $allusage $claimed $unclaimed $pressure $exclusivepressure "$downtime"
 
 done
 
-# printf "\x1b[5m%-20s\x1b[25m%15s%15s%10s%10s%10s%10s%10s%10s\n" $site $pledge $avgusage $maxusage $claimed $unclaimed $pressure $exclusivepressure
-
-
 # Table footer, sums:
 totalpressure="N/A"
-printf "\n%-30s%10s%10s%10s%10s%10s%10s%10s%10s\n" "SUM" $totalpledge $totalavgusage $totalmaxusage $totalclaimed $totalunclaimed $totalpressure $totalexclusivepressure $totalrunprod
+printf "\n%-30s%10s%10s%10s%10s%10s%10s%10s\n" "SUM" $totalpledge $totalanausage $totalallusage $totalclaimed $totalunclaimed $totalpressure $totalexclusivepressure
 echo
 cat << EOF
 Notes:
-   * Pledges are 50% of the last pledge entered in SiteDB for the site. Tier-1 pledges are set to zero for
-     analysis, even though analysis jobs can run at the Tier-1 sites.
-   * Average Usage statistics are from the last month in Dashboard for activity=analysis only.
-   * Maximum Usage statistics are from the last month in Dashboard for all activities including production.
+   * Pledges are 100% of the last pledge entered in SiteDB for the site for all activities.
+   * Analysis Usage statistics are from the last month in Dashboard for activity=analysis only and includes
+     CRAB2 and CRAB3 (verify).
+   * All Activity Usage statistics are from the last month in Dashboard for all activities including production.
    * The Site Table does not include DAG jobs (from CRAB3) which do not run at a DESIRED_Site, but rather 
      on the schedd.
    * Sites are only listed in the Site Table if there is demand (running or queued) or pledged resources.
 EOF
 
 # clean up temp files
-rm $PLEDGES $SEDFILE $CLAIMED $RUNNING $DESIRED $USAGE $USAGEUW $DOWNTIMES $MAXUSAGE $MAXUSAGEUW $RUNNINGPROD
+rm $PLEDGES $SEDFILE $CLAIMED $RUNNING $DESIRED $ANAUSAGE $DOWNTIMES $ALLUSAGE
 
 exit 0
