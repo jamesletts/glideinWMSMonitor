@@ -261,12 +261,6 @@ echo "}"
 return
 }
 
-JSONFILE=${glideinWMSMonitor_OUTPUT_DIR}-json/monitor-multicore-production-`/bin/date +%F-Z%R -u`.json
-writeoutjsonfile vocms97.cern.ch > $JSONFILE
-
-JSONFILE=${glideinWMSMonitor_OUTPUT_DIR}-json/monitor-multicore-anaops-`/bin/date +%F-Z%R -u`.json
-writeoutjsonfile glidein-collector.t2.ucsd.edu > $JSONFILE
-
 JSONFILE=${glideinWMSMonitor_OUTPUT_DIR}-json/monitor-multicore-global-`/bin/date +%F-Z%R -u`.json
 writeoutjsonfile vocms097.cern.ch > $JSONFILE
 

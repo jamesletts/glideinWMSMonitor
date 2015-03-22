@@ -31,20 +31,30 @@ cat >> $OUTFILE <<EOF
 ======================================================= GLOBAL POOL ITB ==================================================
 
 EOF
-# run analysis of global pool, with a time limit of 300s.
-COLLECTOR1=vocms056.cern.ch
+COLLECTOR1=vocms0115.cern.ch
 COLLECTOR2=unknown
 alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
 cat >> $OUTFILE <<EOF
 
 
-===================================================== PRODUCTION POOL =====================================================
+======================================================= TIER-0 POOL =======================================================
 
 EOF
-COLLECTOR1=vocms97.cern.ch
-COLLECTOR2=unknown
-#alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 short >> $OUTFILE
+COLLECTOR1=vocms007.cern.ch
+COLLECTOR2=cmssrv239.fnal.gov
 alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
+cat >> $OUTFILE <<EOF
+
+
+======================================================= UCSD POOL =======================================================
+
+EOF
+COLLECTOR1=glidein-collector.t2.ucsd.edu
+COLLECTOR2=glidein-collector-2.t2.ucsd.edu
+alarm 600 $glideinWMSMonitor_RELEASE_DIR/condor_check $COLLECTOR1 $COLLECTOR2 >> $OUTFILE
+
+
+
 
 #if [ $rc -eq 0 ] ; then
   LINKNAME=$glideinWMSMonitor_OUTPUT_DIR/latest.txt

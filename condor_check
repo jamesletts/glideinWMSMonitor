@@ -13,6 +13,7 @@ fi
 
 COLLECTOR1=$1
 COLLECTOR2=$2
+
 # Collector2 could be discovered
 
 # Header
@@ -36,6 +37,25 @@ if [ $COLLECTOR2 != "unknown" ] ; then
   echo
 fi
 
+# Frontend groups:
+echo Frontend Group glidein counts:
+condor_status -pool $COLLECTOR1 \
+  -format '%s\n' GLIDECLIENT_Group | sort | uniq -c
+echo
+# Frontend ClassAds in the Collector:
+echo Frontend ClassAds in the Collector:
+condor_status -pool $COLLECTOR1 -any \ 
+  -const '(GlideinMyType=?=\"glideresource\")' \
+  -format '%s\n' GlideClientName | sort | uniq -c
+echo
+
+ncollectors=`condor_status -collector -format '%s\n' Machine -pool $COLLECTOR1 | wc -l`
+if [ $ncollectors -gt 1 ] ; then
+  echo Compare Collectors:
+  $glideinWMSMonitor_RELEASE_DIR/CompareCollectors.sh $COLLECTOR1 $COLLECTOR2
+  echo
+fi
+
 # get information from sitedb about pledges and se names by CMSSite name
 PLEDGES=`get_pledges_from_sitedb`
 SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
@@ -54,8 +74,8 @@ RUNNING=`get_pilots_by_site $COLLECTOR1`          || exit 5
 DESIRED=`get_DESIRED_Sites  $COLLECTOR1`          || exit 6
 
 # Print the table of pilots and pressure from queued jobs for each site
-printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Analysis" "Any Actv." "Claimed" "Unclaimed" "Pressure" "Exclusive" "Maintenance"
-printf "%30s%10s%10s%10s%40s%10s\n" "Updated" "Analysis" "Usage 1m" "Usage 1m" "Pressure"
+printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Analysis" "All" "Maximum" "Claimed" "Unclaimed" "Pressure" "Exclusive" "Maintenance"
+printf "%30s%10s%10s%10s%10s%40s%10s\n" "Updated" "to CMS" "Usage 1m" "Usage 1m" "Usage 1m" "Pressure"
 echo
 
 # Sum up some interesting quantities:
@@ -66,6 +86,7 @@ totalexclusivepressure=0
 totalpledge=0
 totalanausage=0
 totalallusage=0
+totalmaxusage=0
 
 # Loop over sites for the table:
 sites=`cat $SEDFILE | awk -F\/ '{print $3}' | sort | uniq`
@@ -98,32 +119,45 @@ for site in $sites ; do
   validityofpledge=`grep ^$site\, $PLEDGES | tail -1 | awk -F\, '{print $3}'`
   if [ "X"$validityofpledge == "X" ] ; then validityofpledge="N/A" ; fi
   
-  # Extract average job slots at site from Dashboard (all activities including analysis and production):
+  # Extract average job slots at site from Dashboard for analysis
   avgusage=`grep ^$site\, $ANAUSAGE | awk -F\, '{print int($2)}'`
   if [ "X"$avgusage == "X" ] ; then avgusage=0 ; fi
   totalanausage=$[$totalanausage+$avgusage]
-
-  # Extract max job slots at site from Dashboard (all activities including analysis and production):
-  allusage=`grep ^$site\, $ALLUSAGE | awk -F\, '{print int($3)}'`
+   
+  # and for all activities
+  allusage=`grep ^$site\, $ALLUSAGE | awk -F\, '{print int($2)}'`
   if [ "X"$allusage == "X" ] ; then allusage=0 ; fi
   totalallusage=$[$totalallusage+$allusage]
+
+  # Extract max job slots at site from Dashboard (all activities)
+  maxusage=`grep ^$site\, $ALLUSAGE | awk -F\, '{print int($3)}'`
+  if [ "X"$maxusage == "X" ] ; then maxusage=0 ; fi
+  totalmaxusage=$[$totalmaxusage+$maxusage]
 
   # downtimes
   downtime=`grep ^$site\, $DOWNTIMES | awk -F\, '{print $2}'`
   #if [ `echo $downtime | wc -w` -eq 0 ] ; then downtime="" ; fi
 
   # skip meaningless entries, no pledge, no demand
-  if [ $[$pledge+$claimed+$unclaimed+$exclusivepressure] -eq 0 ] ; then continue ; fi
+  if [ $[$pledge+$claimed+$unclaimed+$exclusivepressure] -eq 0 ] ; then 
+    continue
+  fi
+  if [ $COLLECTOR1 != "vocms097.cern.ch" ] ; then
+    if [ $[$claimed+$unclaimed+$exclusivepressure] -eq 0 ] ; then
+      continue
+    fi
+  fi
  
-  printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" $site $validityofpledge $pledge $avgusage $allusage $claimed $unclaimed $pressure $exclusivepressure "$downtime"
+  printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" $site $validityofpledge $pledge $avgusage $allusage $maxusage $claimed $unclaimed $pressure $exclusivepressure "$downtime"
 
 done
 
 # Table footer, sums:
 totalpressure="N/A"
-printf "\n%-30s%10s%10s%10s%10s%10s%10s%10s\n" "SUM" $totalpledge $totalanausage $totalallusage $totalclaimed $totalunclaimed $totalpressure $totalexclusivepressure
+printf "\n%-30s%10s%10s%10s%10s%10s%10s%10s%10s\n" "SUM" $totalpledge $totalanausage $totalallusage $totalmaxusage $totalclaimed $totalunclaimed $totalpressure $totalexclusivepressure
 echo
-cat << EOF
+if [ $COLLECTOR1 == "vocms097.cern.ch" ] ; then
+  cat << EOF
 Notes:
    * Pledges are 100% of the last pledge entered in SiteDB for the site for all activities.
    * Analysis Usage statistics are from the last month in Dashboard for activity=analysis only and includes
@@ -133,6 +167,7 @@ Notes:
      on the schedd.
    * Sites are only listed in the Site Table if there is demand (running or queued) or pledged resources.
 EOF
+fi
 
 # clean up temp files
 rm $PLEDGES $SEDFILE $CLAIMED $RUNNING $DESIRED $ANAUSAGE $DOWNTIMES $ALLUSAGE

@@ -79,6 +79,7 @@ get_DESIRED_Sites() {
   source $glideinWMSMonitor_RELEASE_DIR/sitedb_functions.sh
   SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
+  # we could use the -global option to condor_q and not specify the SCHEDD list
   SCHEDDS=`condor_status -pool $POOLNAME  -const '(TotalIdleJobs>0)' -schedd -format ' -name %s' Name ` || return 1
   DESIRED=`mktemp -t DESIRED.txt.XXXXXXX` || return 2
 

@@ -1,2 +1,7 @@
-*/10 * * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_check.sh
-0 5,7,11,17,23 * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_history_dump.sh
+*/15 * * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_check.sh
+*/15 * * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/multi-core.sh >> /dev/null 2>&1
+54 * * * * /crabprod/CSstoragePath/make-multi-core-html.sh >> /dev/null 2>&1
+0 5,11,17,23 * * * source /home/letts/Monitor/glideinWMSMonitor/bashrc && $glideinWMSMonitor_RELEASE_DIR/condor_history_dump.sh
+36  9 * * * /home/letts/.globus/2014-2015/init-proxy.sh >> /dev/null 2>&1
+40 23 * * * /home/letts/scripts/NewQuotaMail.sh > /home/letts/NewQuotaMail.txt 2>&1 
+10,20,30,40,50 * * * * /home/letts/UserPrioDump/dev/DashboardFeed.sh > /home/letts/UserPrioDump/dev/Dashboard.txt 2>&1

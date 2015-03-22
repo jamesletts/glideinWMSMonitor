@@ -175,8 +175,13 @@ dashboard_job_slots_used() {
 dashboard_user_report() {
   GRANULARITY=$1
   NUMBER_OF_PERIODS=$2
+  DATE1=$3
   printf "%10s,%10s,%10s,%10s\n" date1 date2 nusers nuserst2
-  date1=`date -dlast-monday +%F`
+  if [ -x $DATE1 ]; then
+    date1=`date -dlast-monday +%F`
+  else
+    date1=$DATE1
+  fi
   for (( i=1; i<=$NUMBER_OF_PERIODS; i++ )) ; do
     date2=$date1
     date1=`date -d "$date2 -$GRANULARITY days" +%F`
@@ -194,17 +199,18 @@ dashboard_job_report() {
 # ARGS: Number of time periods to display
 GRANULARITY=$1
 NUMBER_OF_PERIODS=$2
+DATE1=$3
 printf "%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s,%10s\n" \
   date1 date2 \
   ncrab2T1 ncrab3T1 nallT1 jscrab2T1 jscrab3T1 jsallT1 \
   ncrab2T2 ncrab3T2 nallT2 jscrab2T2 jscrab3T2 jsallT2 \
   ncrab2T3 ncrab3T3 nallT3 jscrab2T3 jscrab3T3 jsallT3 
 
-date1=`date -dlast-monday +%F`
-
-#date1="2012-04-09"
-#GRANULARITY=7
-#NUMBER_OF_PERIODS=4
+  if [ -x $DATE1 ]; then
+    date1=`date -dlast-monday +%F`
+  else
+    date1=$DATE1
+  fi
 
 for (( i=1; i<=$NUMBER_OF_PERIODS; i++ )) ; do
   date2=$date1
