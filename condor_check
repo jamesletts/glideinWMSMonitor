@@ -42,12 +42,6 @@ echo Frontend Group glidein counts:
 condor_status -pool $COLLECTOR1 \
   -format '%s\n' GLIDECLIENT_Group | sort | uniq -c
 echo
-# Frontend ClassAds in the Collector:
-echo Frontend ClassAds in the Collector:
-condor_status -pool $COLLECTOR1 -any \ 
-  -const '(GlideinMyType=?="glideresource")' \
-  -format '%s\n' GlideClientName | sort | uniq -c
-echo
 
 ncollectors=`condor_status -collector -format '%s\n' Machine -pool $COLLECTOR1 | wc -l`
 if [ $ncollectors -gt 1 ] ; then
