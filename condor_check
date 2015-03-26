@@ -45,7 +45,7 @@ echo
 # Frontend ClassAds in the Collector:
 echo Frontend ClassAds in the Collector:
 condor_status -pool $COLLECTOR1 -any \ 
-  -const '(GlideinMyType=?=\"glideresource\")' \
+  -const '(GlideinMyType=?="glideresource")' \
   -format '%s\n' GlideClientName | sort | uniq -c
 echo
 
