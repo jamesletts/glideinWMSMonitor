@@ -4,12 +4,12 @@ get_federation_pledges() {
   if [ ! -z $1 ] ; then
     year=$1
   else 
-    year=2014
+    year=`/bin/date +%Y`
   fi
 
   # This function finds the pledges for certain federated Tier-2 sites
   # from information in REBUS. Unfortunately the list of federations
-  # and their membership is not get discoverable.
+  # and their membership is not yet discoverable.
 
   url="http://wlcg-rebus.cern.ch/apps/pledges/resources/$year/all/csv"
   curl -ks $url | awk -F\, '
