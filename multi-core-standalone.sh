@@ -14,7 +14,8 @@ export glideinWMSMonitor_RELEASE_DIR="/home/letts/Monitor/glideinWMSMonitor"
 
 
 # Create temporary file to dump HTCondor information
-TMPFILE=`mktemp -p $glideinWMSMonitor_OUTPUT_DIR -t HTCMon.tmp.XXXXXXXXXX`
+#TMPFILE=`mktemp -p $glideinWMSMonitor_OUTPUT_DIR -t HTCMon.tmp.XXXXXXXXXX`
+TMPFILE=/crabprod/CSstoragePath/Monitor/json/HTCMon.tmp.srYclB9804
 
 
 # Function to dump HTCondor information to the temporary file
@@ -27,12 +28,13 @@ GetCondorInfo() {
     -format '%s,'  State               \
     -format '%s\n' Activity            \
   >$TMPFILE
-  echo `/bin/date +%s`
+  /bin/date +%s
 }
 
 NOW=`GetCondorInfo`
 ALSONOW=`echo $NOW | awk '{print strftime("%F %R",$1)}'`
 echo $TMPFILE has `cat $TMPFILE | wc -l` lines created at $ALSONOW.
+#NOW=`/bin/date +%s`
 
 # Function to extract from the temporary condor information file, for a
 # particular site and slottype, the number of CPU cores devoted to each
@@ -40,24 +42,23 @@ echo $TMPFILE has `cat $TMPFILE | wc -l` lines created at $ALSONOW.
 ExtractCondorInfo() {
   SITE=$1
   SLOTTYPE=$2
+  #if [ $SITE=="All" ] ; then SITE="" ; fi
+  #if [ $SLOTTYPE=="Total" ] ; then SLOTTYPE="" ; fi
 
   # check if retiring
   RETIRING=$3
   if [ -z $RETIRING ] ; then
-    MYNOW=2000000000
+    cat $TMPFILE | grep $SITE\,$SLOTTYPE | \
+      awk -F\, '{print $4 " " $5 " " $6}' | \
+      awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+      awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
   else
-    MYNOW=$NOW
+    cat $TMPFILE | grep $SITE,$SLOTTYPE | \
+      awk -F\, -v NOW=$NOW '($3<NOW){print $4 " " $5 " " $6}' | \
+      awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
+      awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' 
   fi
 
-  # if you don't want to pick a SlotType, then wildcard
-  if [ $SLOTTYPE=="Total" ] ; then
-    SLOTTYPE='\.\*'
-  fi
-
-  cat $TMPFILE | grep ^$SITE,$SLOTTYPE  | \
-    awk -F\, -v NOW=$MYNOW '($3<NOW){print $4 " " $5 " " $6}' | \
-    awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
-    awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}'
 }
 
 
@@ -96,7 +97,7 @@ WriteOutJsonFile() {
   WriteOutTable "Static"
   WriteOutTable "Static Retiring"
   WriteOutTable "Total"
-  WriteOutTable "Total Retiring"
+  WriteOutTable "Total Retiring" | sed -e "\$s/,//"
 
   # close the json file
   echo "  }"
@@ -104,9 +105,9 @@ WriteOutJsonFile() {
 }
 
 
-WriteOutJsonFile T1_US_FNAL
+WriteOutJsonFile All
 
 # Clean up
-rm $TMPFILE
+#rm $TMPFILE
 
 exit
