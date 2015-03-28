@@ -24,7 +24,7 @@ print "Static Retiring Idle %",
 print "Dynamic+Partitionable Idle %,",
 print "Dynamic+Partitionable Retiring Idle%"
 
-FILES=glob.glob("/crabprod/CSstoragePath/Monitor-json/monitor-multicore-*.json")
+FILES=glob.glob("/crabprod/CSstoragePath/Monitor/json/monitor-T1_ES_PIC-*.json")
 for FILE in FILES :
 
   try :
@@ -55,7 +55,7 @@ for FILE in FILES :
       totals[TABLE]=float(total)
       wasted[TABLE]=float(total-busy)
 
-  total_totals=float(totals['Total Cpus'])
+  total_totals=float(totals['Total glidein Cpus'])
   static_totals=float(totals['Static multi-core glidein Cpus'])
   static_retiring_totals=float(totals['Static multi-core retiring glidein Cpus'])
   partitionable_totals=float(totals['Dynamic glidein Cpus']+totals['Partitionable glidein Cpus'])
@@ -67,7 +67,7 @@ for FILE in FILES :
   print '{0:6.0f},'.format(partitionable_totals),
   print '{0:6.0f},'.format(partitionable_retiring_totals),
 
-  total_wasted=float(wasted['Total Cpus'])
+  total_wasted=float(wasted['Total glidein Cpus'])
   static_wasted=float(wasted['Static multi-core glidein Cpus'])
   static_retiring_wasted=float(wasted['Static multi-core retiring glidein Cpus'])
   partitionable_wasted=float(wasted['Dynamic glidein Cpus']+wasted['Partitionable glidein Cpus'])
@@ -80,7 +80,7 @@ for FILE in FILES :
   print '{0:6.0f},'.format(partitionable_retiring_wasted),
 
   try :
-    total_wasted/=totals['Total Cpus']
+    total_wasted/=totals['Total glidein Cpus']
   except ZeroDivisionError :
     total_wasted=0.
 

@@ -20,6 +20,7 @@ GetCondorInfo() {
   condor_status -pool $glideinWMS_COLLECTOR \
     -format '%s,'  GLIDEIN_CMSSite     \
     -format '%s,'  SlotType            \
+    -format '%s,'  Name                \
     -format '%s,'  GLIDEIN_ToRetire    \
     -format '%s,'  CPUs                \
     -format '%s,'  State               \
@@ -29,6 +30,7 @@ GetCondorInfo() {
 }
 
 NOW=`GetCondorInfo`
+#NOW=`/bin/date +%s`
 #ALSONOW=`echo $NOW | awk '{print strftime("%F %R",$1)}'`
 #echo $TMPFILE has `cat $TMPFILE | wc -l` lines created at $ALSONOW.
 
@@ -38,14 +40,24 @@ NOW=`GetCondorInfo`
 ExtractCondorInfo() {
   SITE=$1
   SLOTTYPE=$2
-  SEARCHSTRING=`echo $SITE,$SLOTTYPE | sed 's/All//' | sed 's/Total//'`
+  SEARCHSTRING1=`echo $SITE,$SLOTTYPE | sed 's/All//' | sed 's/Total//'`
 
-  # check if retiring, then do the query of the condor information
-  RETIRING=$3
-  if [ -z $RETIRING ] ; then
-    grep $SEARCHSTRING $TMPFILE | awk -F\, '{print $4 " " $5 " " $6}' 
+  # should we explicity check for multi-core?
+  SEARCHSTRING2=$SEARCHSTRING1
+  echo $@ | grep "multi-core" >> /dev/null
+  if [ $? -eq 0 ] ; then
+    SEARCHSTRING2=",slot" 
+  fi
+
+  # should we explicity check the retiring time?
+  # then get the glidein information
+  echo $@ | grep "retiring" >> /dev/null
+  if [ $? -eq 0 ] ; then
+    grep $SEARCHSTRING1 $TMPFILE | grep $SEARCHSTRING2 | \
+      awk -F\, -v NOW=$NOW '($3<NOW){print $5 " " $6 " " $7}' 
   else
-    grep $SEARCHSTRING $TMPFILE | awk -F\, -v NOW=$NOW '($3<NOW){print $4 " " $5 " " $6}' 
+    grep $SEARCHSTRING1 $TMPFILE | grep $SEARCHSTRING2 | \
+      awk -F\, '{print $5 " " $6 " " $7}' 
   fi | \
     awk ' { for (i=$1; i>0; i--) { print $2 " " $3 } }' | sort | uniq -c | \
     awk '{printf("        [\"%s\",\"%s\",%i],\n",$2,$3,$1)}' | \
@@ -63,7 +75,7 @@ ExtractCondorInfo() {
 WriteOutTable() {
   SITE=$1
   TITLE=$2
-  echo "    \"$TITLE\": {"
+  echo "    \"$TITLE glidein Cpus\": {"
   echo "      \"header\": [\"State\",\"Activity\",\"Cpus\"],"
   echo "      \"data\": ["
   ExtractCondorInfo $SITE $TITLE
@@ -90,13 +102,17 @@ WriteOutJsonFile() {
 
     # Write out the individual tables for the different types of glideins
     WriteOutTable $SITE "Partitionable"
-    WriteOutTable $SITE "Partitionable Retiring"
+    WriteOutTable $SITE "Partitionable retiring"
     WriteOutTable $SITE "Dynamic"
-    WriteOutTable $SITE "Dynamic Retiring"
+    WriteOutTable $SITE "Dynamic retiring"
     WriteOutTable $SITE "Static"
-    WriteOutTable $SITE "Static Retiring"
+    WriteOutTable $SITE "Static retiring"
+    WriteOutTable $SITE "Static multi-core"
+    WriteOutTable $SITE "Static multi-core retiring"
+    WriteOutTable $SITE "Total multi-core"
+    WriteOutTable $SITE "Total multi-core retiring" 
     WriteOutTable $SITE "Total"
-    WriteOutTable $SITE "Total Retiring" | sed -e "\$s/,//"
+    WriteOutTable $SITE "Total retiring" | sed -e "\$s/,//"
 
     # close the json file
     echo "  }"
@@ -105,9 +121,11 @@ WriteOutJsonFile() {
 }
 
 
+WriteOutJsonFile "All"
 WriteOutJsonFile "T1_ES_PIC"
 WriteOutJsonFile "T1_US_FNAL"
 WriteOutJsonFile "T2_US_Purdue"
+WriteOutJsonFile "T2_US_UCSD"
 
 # Clean up
 rm $TMPFILE
