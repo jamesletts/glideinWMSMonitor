@@ -40,9 +40,6 @@ for FILE in FILES :
   readable_date=datetime.datetime.utcfromtimestamp(now).strftime('%Y-%m-%d, %H:%M:%S,')
   print str(now)+",",readable_date,
 
-  POOL=FILE.split('-')
-  print (POOL[3]+",").ljust(11),
-  
   totals={}
   wasted={}
   for TABLE in sorted(TABLES) :

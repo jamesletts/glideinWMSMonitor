@@ -122,12 +122,18 @@ WriteOutJsonFile() {
 
 
 WriteOutJsonFile "All"
+WriteOutJsonFile "T1_DE_KIT"
 WriteOutJsonFile "T1_ES_PIC"
+WriteOutJsonFile "T1_FR_CCIN2P3"
+WriteOutJsonFile "T1_IT_CNAF"
+WriteOutJsonFile "T1_RU_JINR"
+WriteOutJsonFile "T1_UK_RAL"
 WriteOutJsonFile "T1_US_FNAL"
+WriteOutJsonFile "T2_DE_DESY"
 WriteOutJsonFile "T2_US_Purdue"
 WriteOutJsonFile "T2_US_UCSD"
 
 # Clean up
-rm $TMPFILE
+# rm $TMPFILE
 
 exit
