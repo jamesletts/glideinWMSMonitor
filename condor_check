@@ -2,7 +2,9 @@
 
 # TODO: 
 #   put raw outputs in json 
-#   pressure from analysis and production separately
+#   pressure and running from analysis and production separately
+#   update for MULTICORE
+#   maintenance broken?
 
 if [ -z $glideinWMSMonitor_RELEASE_DIR ] ; then
   echo "ERROR: glideinWMSMonitor source code missing."
@@ -13,11 +15,13 @@ fi
 
 COLLECTOR1=$1
 COLLECTOR2=$2
-
-# Collector2 could be discovered
+if [ -z $COLLECTOR2 ] ; then
+  COLLECTOR2=`condor_status -pool $COLLECTOR1 -collector \
+              -format '%s\n' Machine | grep -v $COLLECTOR1 | tail -1`
+fi
 
 # Header
-echo Summary Table for glidinWMS pool $COLLECTOR1 at `/bin/date -u`
+echo Summary Scheduler Table for glidinWMS pool $COLLECTOR1 at `/bin/date -u`
 echo
 
 # Summary Table from the Collector
@@ -43,8 +47,7 @@ condor_status -pool $COLLECTOR1 \
   -format '%s\n' GLIDECLIENT_Group | sort | uniq -c
 echo
 
-ncollectors=`condor_status -collector -format '%s\n' Machine -pool $COLLECTOR1 | wc -l`
-if [ $ncollectors -gt 1 ] ; then
+if [ [ ! -z $COLLECTOR1 ] && [ ! -z $COLLECTOR2 ] ] ; then
   echo Compare Collectors:
   $glideinWMSMonitor_RELEASE_DIR/CompareCollectors.sh $COLLECTOR1 $COLLECTOR2
   echo
@@ -55,21 +58,20 @@ PLEDGES=`get_pledges_from_sitedb`
 SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
 # Get information from dashboard about avg and max usage by CMSSite name
-# Information from T2_US_Wisconsin before April 3, 2014 is inflated.
 ANAUSAGE=`dashboard_usage_by_site analysis "1 month ago"`
 ALLUSAGE=`dashboard_usage_by_site all "1 month ago"`
 
 # get information from SSB about site downtimes
 DOWNTIMES=`site_downtimes_from_ssb`
 
-# get claimed and running pilots, DESIRED_Sites for each pool:
-CLAIMED=`get_pilots_by_site $COLLECTOR1 -claimed` || exit 4
-RUNNING=`get_pilots_by_site $COLLECTOR1`          || exit 5
-DESIRED=`get_DESIRED_Sites  $COLLECTOR1`          || exit 6
+# get claimed and running pilots CPUs, DESIRED_Sites for each pool:
+CLAIMED=`get_pilot_cpus_by_site $COLLECTOR1 -claimed` || exit 4
+RUNNING=`get_pilot_cpus_by_site $COLLECTOR1`          || exit 5
+DESIRED=`get_DESIRED_Sites      $COLLECTOR1`          || exit 6
 
 # Print the table of pilots and pressure from queued jobs for each site
 printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Analysis" "All" "Maximum" "Claimed" "Unclaimed" "Pressure" "Exclusive" "Maintenance"
-printf "%30s%10s%10s%10s%10s%40s%10s\n" "Updated" "to CMS" "Usage 1m" "Usage 1m" "Usage 1m" "Pressure"
+printf "%30s%10s%10s%10s%10s%10s%10s%20s%10s\n" "Updated" "to CMS" "Usage 1m" "Usage 1m" "Usage 1m" "CPUs" "CPUs" "Pressure"
 echo
 
 # Sum up some interesting quantities:

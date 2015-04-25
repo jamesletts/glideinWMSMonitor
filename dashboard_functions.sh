@@ -1,6 +1,8 @@
 #!/bin/bash
 
 site_downtimes_from_ssb() {
+  # this function is broken April 2015
+
   # get the downtimes from SSB, remove any quotes so the output
   # is just csv list of [site,downtime string]
   #

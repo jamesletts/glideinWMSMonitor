@@ -56,12 +56,32 @@ get_pilots_by_site() {
   #    running at CMSSites, one line per site.
 
   PILOTS=`mktemp -t PILOTS.txt.XXXXXXX` || return 1
-  condor_status -pool $@ -format '{%s}\n' GLIDEIN_CMSSite | sort | uniq -c > $PILOTS || return 2
+  condor_status -pool $@ -format '{%s}\n' GLIDEIN_CMSSite \
+    | sort | uniq -c > $PILOTS || return 2
+  echo $PILOTS
+  return 0
+}
+
+get_pilot_cpus_by_site() {
+  # Function to list the number of cpus in glideins per site.
+  #
+  # Usage:
+  #    get_pilot_cpus_by_site POOLNAME [optional args for condor_status]
+  # Output:
+  #    File name of temporary file containing the numbers of CPUs
+  #    running in glideins at CMSSites, one line per CPU
+
+  PILOTS=`mktemp -t PILOTS.txt.XXXXXXX` || return 1
+  condor_status -pool $@ -format '%s ' CPUs -format '{%s}\n' GLIDEIN_CMSSite \
+    | awk ' { for (i=$1; i>0; i--) { print $2 } }' \
+    | sort | uniq -c > $PILOTS || return 2
   echo $PILOTS
   return 0
 }
 
 get_DESIRED_Sites() {
+  # TODO: Weigh by CPUs for multi-threaded jobs
+  # 
   # Get all queued jobs' DESIRED_Sites, translating from DESIRED_SEs
   # if needed (i.e. for CRAB2). If DESIRED_Sites exists, take that. 
   # Otherwise take DESIRED_SEs and translate using SEDFILE from SiteDB.
