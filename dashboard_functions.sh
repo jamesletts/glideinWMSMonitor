@@ -1,8 +1,6 @@
 #!/bin/bash
 
 site_downtimes_from_ssb() {
-  # this function is broken April 2015
-
   # get the downtimes from SSB, remove any quotes so the output
   # is just csv list of [site,downtime string]
   #
@@ -13,8 +11,8 @@ site_downtimes_from_ssb() {
   
   OUTPUTFILE=`mktemp -t DOWNTIMES.csv.XXXXXXXXXX` || return 1
   url="http://dashb-ssb.cern.ch/dashboard/request.py/getallshort?view=maint"
-  curl -ks -H 'Accept:text/csv' $url | awk -F\, '{print $1 "," $3}' \
-    | tr -d \" | tr -d \' | grep OUTAGE > $OUTPUTFILE || return 1
+  curl -ks -H 'Accept:text/csv' $url | grep OUTAGE \
+    | awk -F\, '{print $1 "," $2}' > $OUTPUTFILE || return 1
   echo $OUTPUTFILE
   return 0
 }
