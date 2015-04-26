@@ -80,7 +80,7 @@ get_pilot_cpus_by_site() {
 }
 
 get_DESIRED_Sites() {
-  # TODO: Weigh by CPUs for multi-threaded jobs
+  # TODO: Weigh by RequestCPUs if defined
   # 
   # Get all queued jobs' DESIRED_Sites, translating from DESIRED_SEs
   # if needed (i.e. for CRAB2). If DESIRED_Sites exists, take that. 
@@ -89,7 +89,7 @@ get_DESIRED_Sites() {
   # run on a schedd and are not counted here.
   #
   # Usage:
-  #    get_DESIRED_Sites $POOLNAME
+  #    get_DESIRED_Sites $POOLNAME [optional args for condor_status]
   # Output:
   #    File name of temporary file containing the list of DESIRES_Sites,
   #    one line per job.
@@ -100,13 +100,16 @@ get_DESIRED_Sites() {
   SEDFILE=`translate_se_names_in_sitedb_to_cmssite`
 
   # we could use the -global option to condor_q and not specify the SCHEDD list
-  SCHEDDS=`condor_status -pool $POOLNAME  -const '(TotalIdleJobs>0)' -schedd -format ' -name %s' Name ` || return 1
+  SCHEDDS=`condor_status -pool $POOLNAME -const '(TotalIdleJobs>0)' \
+           -schedd -format ' -name %s' Name ` || return 1
   DESIRED=`mktemp -t DESIRED.txt.XXXXXXX` || return 2
 
   # run condor_q if there are queued jobs in the pool only:
   if [ `echo $SCHEDDS | wc -w` -ne 0 ] ; then 
-    condor_q $SCHEDDS -pool $POOLNAME -const '(JobStatus=?=1)' \
-      -format '%s' DESIRED_Sites -format ' %s' DESIRED_SEs -format ' %s\n' Owner \
+    condor_q $SCHEDDS -pool $@ -const '(JobStatus=?=1)' \
+      -format '%s'    DESIRED_Sites \
+      -format ' %s'   DESIRED_SEs \
+      -format ' %s\n' Owner \
       | sed 's/undefined//g' | awk '{print $1}' | sed -f $SEDFILE >> $DESIRED
   fi
 

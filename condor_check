@@ -68,10 +68,12 @@ DOWNTIMES=`site_downtimes_from_ssb`
 CLAIMED=`get_pilot_cpus_by_site $COLLECTOR1 -claimed` || exit 4
 RUNNING=`get_pilot_cpus_by_site $COLLECTOR1`          || exit 5
 DESIRED=`get_DESIRED_Sites      $COLLECTOR1`          || exit 6
+DESIANA=`get_DESIRED_Sites $COLLECTOR1 \
+         -const '(AcctGroup=?="analysis")'`           || exit 7
 
 # Print the table of pilots and pressure from queued jobs for each site
-printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Analysis" "All" "Maximum" "Claimed" "Unclaimed" "Pressure" "Exclusive" "Maintenance"
-printf "%30s%10s%10s%10s%10s%10s%10s%20s%10s\n" "Updated" "to CMS" "Usage 1m" "Usage 1m" "Usage 1m" "CPUs" "CPUs" "Pressure"
+printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" "Site" "Pledge" "Pledged" "Analysis" "All" "Maximum" "Claimed" "Unclaimed" "Pressure" "Exclusive" "Pressure" "Maintenance"
+printf "%30s%10s%10s%10s%10s%10s%10s%20s%10s%10s\n" "Updated" "to CMS" "Usage 1m" "Usage 1m" "Usage 1m" "CPUs" "CPUs" "Pressure" "CRAB3"
 echo
 
 # Sum up some interesting quantities:
@@ -88,25 +90,28 @@ totalmaxusage=0
 sites=`cat $SEDFILE | awk -F\/ '{print $3}' | sort | uniq`
 for site in $sites ; do
 
-  # Claimed pilots at site
+  # Claimed CPUs at site
   claimed=`grep \{$site\} $CLAIMED | awk '{print $1}'`
   if [ "X"$claimed == "X" ] ; then claimed=0 ; fi
   totalclaimed=$[$totalclaimed+$claimed]
 
-  # Idle pilots at site = running - claimed:
+  # Idle CPUs at site = running - claimed:
   unclaimed=`grep \{$site\} $RUNNING | awk -v x=$claimed '{print $1-x}'`
   if [ "X"$unclaimed == "X" ] ; then unclaimed=0 ; fi
   totalunclaimed=$[$totalunclaimed+$unclaimed]
 
   # Get queeud jobs for site (not exclusively):
   pressure=`grep $site $DESIRED | wc -l`
+  pressana=`grep $site $DESIANA | wc -l`
 
   # Get jobs queued only for this site:
-  exclusivepressure=`grep $site $DESIRED | awk -v site=$site '$1==site{print $0}' | wc -l`
+  exclusivepressure=`grep $site $DESIRED \
+    | awk -v site=$site '$1==site{print $0}' | wc -l`
   totalexclusivepressure=$[$totalexclusivepressure+$exclusivepressure]
 
   # Extract pledge for this site (total for all activities):
-  # Federation pledges may have duplicated entries (one SiteDB, one REBUS), so take the last one.
+  # Federation pledges may have duplicated entries (one SiteDB, one REBUS),
+  # so take the last one.
   pledge=`grep ^$site\, $PLEDGES | tail -1 | awk -F\, '{print int($2)}'`
   if [ "X"$pledge == "X" ] ; then pledge=0 ; fi
   totalpledge=$[$totalpledge+$pledge]
@@ -144,7 +149,7 @@ for site in $sites ; do
     fi
   fi
  
-  printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" $site $validityofpledge $pledge $avgusage $allusage $maxusage $claimed $unclaimed $pressure $exclusivepressure "$downtime"
+  printf "%-20s%10s%10s%10s%10s%10s%10s%10s%10s%10s%10s  %-18s\n" $site $validityofpledge $pledge $avgusage $allusage $maxusage $claimed $unclaimed $pressure $exclusivepressure $pressana "$downtime"
 
 done
 
