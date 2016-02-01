@@ -11,7 +11,7 @@ get_federation_pledges() {
   # from information in REBUS. Unfortunately the list of federations
   # and their membership is not yet discoverable.
 
-  url="http://wlcg-rebus.cern.ch/apps/pledges/resources/$year/all/csv"
+  url="https://wlcg-rebus.cern.ch/apps/pledges/resources/$year/all/csv"
   curl -ks $url | awk -F\, '
   BEGIN{totalpledge=0}
   {
