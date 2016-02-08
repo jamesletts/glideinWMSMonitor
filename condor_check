@@ -29,8 +29,12 @@ condor_status -pool $COLLECTOR1 -schedd || exit 2
 echo
 
 # Last Negotiation Cycle time
+negotime=`condor_status -pool $COLLECTOR1 -nego -l | grep LastNegotiationCycleDuration1 | awk '{print $3}'` || exit 3
+echo "Negotiation time (ideally under 300s) T1 = ${negotime}s"
+negotime=`condor_status -pool $COLLECTOR1 -nego -l | grep LastNegotiationCycleDuration2 | awk '{print $3}'` || exit 3
+echo "Negotiation time (ideally under 300s) T2_US = ${negotime}s"
 negotime=`condor_status -pool $COLLECTOR1 -nego -l | grep LastNegotiationCycleDuration0 | awk '{print $3}'` || exit 3
-echo "Negotiation time (ideally under 300s) = ${negotime}s"
+echo "Negotiation time (ideally under 300s) other = ${negotime}s"
 echo
 
 if [ $COLLECTOR2 != "unknown" ] ; then
